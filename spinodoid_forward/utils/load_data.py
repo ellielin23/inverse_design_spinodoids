@@ -136,7 +136,7 @@ def load_dataset(path_csv):
     return P, S
 
 
-def load_distributional_dataset(path_csv, decimals=5):
+def load_distributional_dataset(path_csv):
     """
     Loads a CSV where multiple P samples are given per S, grouped by identical S.
 
@@ -145,20 +145,20 @@ def load_distributional_dataset(path_csv, decimals=5):
     """
     data = np.genfromtxt(path_csv, delimiter=',')[:, 1:]  # skip ID
 
-    # Reorder structure: S = [S2, S3, S4, S1]
+    # reorder structure: S = [S2, S3, S4, S1]
     S_all = np.concatenate([data[:, 1:4], data[:, 0:1]], axis=-1)  # shape (N, 4)
 
-    # Convert C_flat_21 to elasticity tensors
+    # convert C_flat_21 to elasticity tensors
     C_flat_21 = data[:, 4:]
     C_tensor = full_C_from_C_flat_21(C_flat_21)
     P_all = extract_target_properties(C_tensor)  # shape (N, 9)
 
-    # Round structure keys and group all Ps under them
+    # group all Ps under them
     empirical_data = defaultdict(list)
     for S_vec, P_vec in zip(S_all, P_all):
-        S_key = tuple(np.round(S_vec, decimals=decimals))
+        S_key = tuple(S_vec)
         empirical_data[S_key].append(P_vec)
 
-    # Stack lists into arrays
+    # stack lists into arrays
     empirical_data = {k: np.vstack(v) for k, v in empirical_data.items()}
     return empirical_data

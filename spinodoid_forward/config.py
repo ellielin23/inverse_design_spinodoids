@@ -1,10 +1,10 @@
 # config.py
 
 # === model dimensions ===
-S_DIM = 4                    # structure parameter dimension
-P_DIM = 9                    # target property dimension
-HIDDEN_DIMS = [64, 32]       # hidden dimensions of the neural network
-NUM_FLOWS = 3               # number of planar flows
+S_DIM = 4                         # structure parameter dimension
+P_DIM = 9                         # target property dimension
+HIDDEN_DIMS = [128, 64, 32]       # hidden dimensions of the neural network
+NUM_FLOWS = 3                     # number of planar flows
 
 # === training hyperparameters ===
 BATCH_SIZE = 64
@@ -13,6 +13,7 @@ NUM_EPOCHS = 100
 
 # === data ===
 DATA_PATH = "data/dataset_train_x1000.csv"
+DISTRIBUTIONAL_DATA_PATH = "data/dataset_distributional.csv"
 
 # === gaussian training ===
 TRIAL_GAUSSIAN = 10
