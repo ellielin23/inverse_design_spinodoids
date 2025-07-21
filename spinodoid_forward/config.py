@@ -8,9 +8,9 @@ NUM_FLOWS = 3 # number of planar flows
 
 # === training hyperparameters ===
 BATCH_SIZE = 32
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 3e-4
 NUM_EPOCHS = 500
-BETA_VAR_REG = 7e-3 # regularization parameter for variance
+BETA_VAR_REG = 1e-2 # regularization parameter for variance
 
 # === data ===
 DATA_PATH = "data/dataset_train_x1000.csv"
