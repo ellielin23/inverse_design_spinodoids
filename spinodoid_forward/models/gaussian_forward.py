@@ -21,7 +21,7 @@ class GaussianForwardModel(nn.Module):
         input_dim = S_dim
         for hdim in hidden_dims:
             layers.append(nn.Linear(input_dim, hdim))
-            layers.append(nn.ReLU())
+            layers.append(nn.Tanh())
             input_dim = hdim
         self.backbone = nn.Sequential(*layers)
 

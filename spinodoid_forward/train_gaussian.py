@@ -33,7 +33,7 @@ for epoch in range(NUM_EPOCHS):
         mu, log_sigma = model(S_batch)
 
         # compute loss
-        loss = gaussian_nll(mu, log_sigma, P_batch)
+        loss = gaussian_nll(mu, log_sigma, P_batch, BETA_VAR_REG)
         loss.backward()
         optimizer.step()
 

@@ -2,6 +2,7 @@
 
 import torch
 import math
+from config import BETA_VAR_REG
 
 # === gaussian negative log-likelihood ===
 def gaussian_nll(mu, log_sigma, target):
@@ -18,7 +19,9 @@ def gaussian_nll(mu, log_sigma, target):
     """
     var = torch.exp(2 * log_sigma)  # σ² = (e^{logσ})² = e^{2logσ}
     nll = 0.5 * (2 * log_sigma + ((target - mu)**2) / var)
-    return nll.mean()
+    loss = nll.mean()
+    var_reg = torch.mean(var)
+    return loss + BETA_VAR_REG * var_reg
 
 # === normalizing flow negative log-likelihood ===
 def flow_nll(base_mu, base_log_sigma, z_k, log_det_jacobians, target):
