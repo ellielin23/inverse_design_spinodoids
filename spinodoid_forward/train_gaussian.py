@@ -18,6 +18,10 @@ dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 model = GaussianForwardModel(S_DIM, P_DIM, hidden_dims=HIDDEN_DIMS)
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+# === add learning rate scheduler === # remove
+from torch.optim.lr_scheduler import StepLR
+scheduler = StepLR(optimizer, step_size=100, gamma=0.5)
+
 # === loss tracker ===
 losses = []
 
@@ -33,12 +37,16 @@ for epoch in range(NUM_EPOCHS):
         mu, log_sigma = model(S_batch)
 
         # compute loss
-        loss = gaussian_nll(mu, log_sigma, P_batch, BETA_VAR_REG)
+        loss = gaussian_nll(mu, log_sigma, P_batch)
         loss.backward()
         optimizer.step()
 
         total_loss_epoch += loss.item()
 
+    # step the scheduler every epoch
+    scheduler.step() # remove
+
+    current_lr = scheduler.get_last_lr()[0] # remove
     print(f"Epoch {epoch+1:03d} | NLL: {total_loss_epoch:.4f}")
     losses.append(total_loss_epoch)
 
