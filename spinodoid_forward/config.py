@@ -10,14 +10,14 @@ NUM_FLOWS = 3 # number of planar flows
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 500
-BETA_VAR_REG = 3e-3 # regularization parameter for variance
+BETA_VAR_REG = 7e-3 # regularization parameter for variance
 
 # === data ===
 DATA_PATH = "data/dataset_train_x1000.csv"
 DISTRIBUTIONAL_DATA_PATH = "data/dataset_distributional.csv"
 
 # === gaussian training ===
-TRIAL_GAUSSIAN = 9
+TRIAL_GAUSSIAN = 13
 GAUSSIAN_SAVE_PATH = f'checkpoints/gaussian/gaussian_ckpt_{TRIAL_GAUSSIAN}.pt'
 
 # === flow training ===
