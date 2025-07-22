@@ -13,13 +13,13 @@ DECODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for decoder
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 100
-BETA = 3.0             # KL divergence weighting
+BETA = 0.0             # KL divergence weighting
 
 # === data ===
 DATA_PATH = "data/large_dataset.csv"
 
 # === checkpoint paths ===
-TRIAL = 8
+TRIAL = 10
 CHECKPOINT_DIR_PATH = f'checkpoints/trial_{TRIAL}'
 ENCODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt'
 DECODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt'
