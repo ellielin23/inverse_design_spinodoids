@@ -20,6 +20,6 @@ DATA_PATH = "data/large_dataset.csv"
 
 # === checkpoint paths ===
 TRIAL = 3
-CHECKPOINT_DIR_PATH = f'models/checkpoints/iteration_{TRIAL}'
+CHECKPOINT_DIR_PATH = f'checkpoints/trial_{TRIAL}'
 ENCODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt'
 DECODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt'
