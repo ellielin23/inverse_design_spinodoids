@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 from config import ENCODER_HIDDEN_DIMS
 
+# if running with auto-tuning, replace the config ENCODER_HIDDEN_DIMS 
+# with a parameter called enc_hidden_dims in the Encoder class
+
 class Encoder(nn.Module):
     """
     Encoder for Conditional Variational Autoencoder.
@@ -13,7 +16,7 @@ class Encoder(nn.Module):
     """
 
     def __init__(self, S_dim, P_dim, latent_dim):
-        """
+        """             
         Initialize the encoder network.
 
         Args:
@@ -24,10 +27,10 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()  # initialize the base nn.Module class
         input_dim = S_dim + P_dim
 
-        # hidden layers (based on config)
+        # hidden layers
         layers = []
         prev_dim = input_dim
-        for hidden_dim in ENCODER_HIDDEN_DIMS:
+        for hidden_dim in ENCODER_HIDDEN_DIMS: # change
             layers.append(nn.Linear(prev_dim, hidden_dim))
             layers.append(nn.ReLU())
             prev_dim = hidden_dim

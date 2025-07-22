@@ -35,7 +35,7 @@ for latent_dim, enc_dims, dec_dims, batch_size, lr, beta, ep in itertools.produc
     }
 
     # convert to a hashable representation
-    config_hash = frozenset(config.items())
+    config_hash = frozenset((k, tuple(v) if isinstance(v, list) else v) for k, v in config.items() if k != 'save_dir')
 
     if config_hash not in seen_configs:
         CONFIGS.append(config)
