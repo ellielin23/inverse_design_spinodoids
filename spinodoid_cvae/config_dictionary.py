@@ -1,6 +1,9 @@
 # config_dictionary.py
 
-latent_dims = [2, 3, 5]
+import itertools
+
+# === define config options ===
+latent_dims = [2, 3, 4, 5, 6]
 encoder_dims_list = [
     [128, 64, 32],
     [256, 128, 64],
@@ -9,7 +12,31 @@ decoder_dims_list = [
     [128, 64, 32],
     [256, 128, 64],
 ]
-batch_sizes = [32, 64]
-learning_rates = [1e-3, 5e-4]
+batch_sizes = [32, 64, 128]
+learning_rates = [1e-3, 5e-4, 1e-4]
 betas = [1.0, 0.5]
-epochs = [200]
+epochs = [300, 500]
+
+# === generate config dicts ===
+CONFIGS = []
+seen_configs = set()
+
+for latent_dim, enc_dims, dec_dims, batch_size, lr, beta, ep in itertools.product(
+    latent_dims, encoder_dims_list, decoder_dims_list, batch_sizes, learning_rates, betas, epochs
+):
+    config = {
+        'latent_dim': latent_dim,
+        'encoder_dims': enc_dims,
+        'decoder_dims': dec_dims,
+        'batch_size': batch_size,
+        'learning_rate': lr,
+        'beta': beta,
+        'epochs': ep
+    }
+
+    # convert to a hashable representation
+    config_hash = frozenset(config.items())
+
+    if config_hash not in seen_configs:
+        CONFIGS.append(config)
+        seen_configs.add(config_hash)
