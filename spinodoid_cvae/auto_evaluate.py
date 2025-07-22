@@ -54,6 +54,7 @@ def main():
                 continue
 
             trial_num = folder.split('_')[-1]
+            print(f"✅ Evaluating Trial {trial_num}...")
             decoder_path = os.path.join(trial_path, f"decoder_{trial_num}.pt")
 
             if not os.path.exists(decoder_path):

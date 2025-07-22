@@ -4,7 +4,7 @@ from auto_train import main as train_main
 from auto_evaluate import main as evaluate_main
 
 def main():
-    print("\n🚀 Starting auto-tuning...\n")
+    print("\n✅ Starting auto-tuning...\n")
     train_main()
     print("\n✅ Training complete.\n")
     

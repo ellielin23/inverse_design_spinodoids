@@ -79,7 +79,7 @@ def main():
         config = config.copy()  # to avoid modifying the original
         config['save_dir'] = f"auto_checkpoints/trial_{i}"
         config['trial'] = i
-        print(f"\n🚀 Starting Trial {i} with config: {config}")
+        print(f"\n✅ Starting Trial {i} with config: {config}")
         train_model(config)
 
 if __name__ == "__main__":
