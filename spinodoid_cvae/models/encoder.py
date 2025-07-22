@@ -2,10 +2,7 @@
 
 import torch
 import torch.nn as nn
-from config import ENCODER_HIDDEN_DIMS
 
-# if running with auto-tuning, replace the config ENCODER_HIDDEN_DIMS 
-# with a parameter called enc_hidden_dims in the Encoder class
 
 class Encoder(nn.Module):
     """
@@ -15,7 +12,7 @@ class Encoder(nn.Module):
     latent space distribution.
     """
 
-    def __init__(self, S_dim, P_dim, latent_dim):
+    def __init__(self, S_dim, P_dim, latent_dim, enc_hidden_dims):
         """             
         Initialize the encoder network.
 
@@ -30,7 +27,7 @@ class Encoder(nn.Module):
         # hidden layers
         layers = []
         prev_dim = input_dim
-        for hidden_dim in ENCODER_HIDDEN_DIMS: # change
+        for hidden_dim in enc_hidden_dims: # change
             layers.append(nn.Linear(prev_dim, hidden_dim))
             layers.append(nn.ReLU())
             prev_dim = hidden_dim

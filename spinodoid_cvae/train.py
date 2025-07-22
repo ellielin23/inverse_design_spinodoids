@@ -1,9 +1,8 @@
-# train.py
-
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import os
 
 from models.encoder import Encoder
 from models.decoder import Decoder
@@ -16,8 +15,8 @@ dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize models ===
-encoder = Encoder(S_DIM, P_DIM, LATENT_DIM)
-decoder = Decoder(S_DIM, P_DIM, LATENT_DIM)
+encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
+decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -80,10 +79,28 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
-# ===== ensure checkpoint directory exists =====
-import os
+# === ensure checkpoint directory exists ===
 os.makedirs(CHECKPOINT_DIR_PATH, exist_ok=True)
 
-# ===== save model checkpoints =====
+# === save model checkpoints ===
 torch.save(encoder.state_dict(), ENCODER_SAVE_PATH)
 torch.save(decoder.state_dict(), DECODER_SAVE_PATH)
+
+# === save config.txt ===
+config_dict = {
+    "S_DIM": S_DIM,
+    "P_DIM": P_DIM,
+    "LATENT_DIM": LATENT_DIM,
+    "ENCODER_HIDDEN_DIMS": ENCODER_HIDDEN_DIMS,
+    "DECODER_HIDDEN_DIMS": DECODER_HIDDEN_DIMS,
+    "BATCH_SIZE": BATCH_SIZE,
+    "LEARNING_RATE": LEARNING_RATE,
+    "NUM_EPOCHS": NUM_EPOCHS,
+    "BETA": BETA
+}
+
+with open(CONFIG_SAVE_PATH, "w") as f:
+    for k, v in config_dict.items():
+        f.write(f"{k}: {v}\n")
+
+print("✅ Saved model and config.")

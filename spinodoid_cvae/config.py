@@ -3,7 +3,7 @@
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
 P_DIM = 9              # target property dimension
-LATENT_DIM = 3         # latent space dimension (can tune later)
+LATENT_DIM = 4         # latent space dimension (can tune later)
 
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder
@@ -19,7 +19,8 @@ BETA = 1.0             # KL divergence weighting
 DATA_PATH = "data/large_dataset.csv"
 
 # === checkpoint paths ===
-TRIAL = 4
+TRIAL = 2
 CHECKPOINT_DIR_PATH = f'checkpoints/trial_{TRIAL}'
 ENCODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt'
 DECODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt'
+CONFIG_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/config_{TRIAL}.txt'

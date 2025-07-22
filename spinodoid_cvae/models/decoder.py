@@ -1,11 +1,8 @@
 # models/decoder.py
 
-# if running with auto-tuning, replace the config DECODER_HIDDEN_DIMS 
-# with a parameter called dec_hidden_dims in the Decoder class
-
 import torch
 import torch.nn as nn
-from config import DECODER_HIDDEN_DIMS
+
 
 class Decoder(nn.Module):
     """
@@ -14,7 +11,7 @@ class Decoder(nn.Module):
     and outputs a predicted structure vector S-hat.
     """
 
-    def __init__(self, S_dim, P_dim, latent_dim):
+    def __init__(self, S_dim, P_dim, latent_dim, dec_hidden_dims):
         """
         Initialize the decoder network.
 
@@ -29,7 +26,7 @@ class Decoder(nn.Module):
         # hidden layers (based on config)
         layers = []
         prev_dim = input_dim
-        for hidden_dim in DECODER_HIDDEN_DIMS: # change
+        for hidden_dim in dec_hidden_dims: # change
             layers.append(nn.Linear(prev_dim, hidden_dim))
             layers.append(nn.ReLU())
             prev_dim = hidden_dim
