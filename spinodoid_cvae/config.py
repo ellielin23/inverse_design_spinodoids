@@ -14,12 +14,13 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 100
 BETA = 0.0             # KL divergence weighting
+NUM_FLOWS = 4
 
 # === data ===
 DATA_PATH = "data/large_dataset.csv"
 
 # === checkpoint paths ===
-TRIAL = 10
+TRIAL = 11
 CHECKPOINT_DIR_PATH = f'checkpoints/trial_{TRIAL}'
 ENCODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt'
 DECODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt'

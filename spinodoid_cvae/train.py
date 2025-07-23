@@ -6,6 +6,7 @@ import os
 
 from models.encoder import Encoder
 from models.decoder import Decoder
+from models.flow_decoder import FlowDecoder
 from utils.dataset import SpinodoidDataset
 from utils.loss import total_loss
 from config import *
@@ -16,7 +17,8 @@ dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize models ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
-decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
+# decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
+decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -50,7 +52,7 @@ for epoch in range(NUM_EPOCHS):
         z = reparameterize(mu, logvar)
 
         # decode z and P → predicted S
-        S_hat = decoder(z, P_batch)
+        S_hat, _ = decoder(z, P_batch)  # NEED TO CHANGE THIS IF NOT FLOW DECODER
 
         # compute loss
         loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar)
@@ -96,7 +98,8 @@ config_dict = {
     "BATCH_SIZE": BATCH_SIZE,
     "LEARNING_RATE": LEARNING_RATE,
     "NUM_EPOCHS": NUM_EPOCHS,
-    "BETA": BETA
+    "BETA": BETA,
+    "NUM_FLOWS": NUM_FLOWS
 }
 
 with open(CONFIG_SAVE_PATH, "w") as f:
