@@ -17,8 +17,8 @@ dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize models ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
-# decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, DROPOUT_PROB)
-decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS, DROPOUT_PROB)
+decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
+# decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS, DROPOUT_PROB)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -52,7 +52,7 @@ for epoch in range(NUM_EPOCHS):
         z = reparameterize(mu, logvar)
 
         # decode z and P → predicted S
-        S_hat, _ = decoder(z, P_batch)  # NEED TO CHANGE THIS IF NOT FLOW DECODER
+        S_hat = decoder(z, P_batch)  # NEED TO CHANGE THIS IF NOT FLOW DECODER
 
         # compute loss
         loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar)
