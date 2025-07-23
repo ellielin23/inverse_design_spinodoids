@@ -17,8 +17,8 @@ dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize models ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
-# decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
-decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS)
+# decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, DROPOUT_PROB)
+decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS, DROPOUT_PROB)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -99,7 +99,8 @@ config_dict = {
     "LEARNING_RATE": LEARNING_RATE,
     "NUM_EPOCHS": NUM_EPOCHS,
     "BETA": BETA,
-    "NUM_FLOWS": NUM_FLOWS
+    "NUM_FLOWS": NUM_FLOWS,
+    "DROPOUT_PROB": DROPOUT_PROB
 }
 
 with open(CONFIG_SAVE_PATH, "w") as f:

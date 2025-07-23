@@ -90,7 +90,7 @@ def extract_cluster_region(Z_2D, cluster_labels, target_cluster, x_bounds, y_bou
         (cluster_labels == target_cluster)
     )
 
-    print("\nExtracting region:")
+    print("\n✅ Extracting region:")
     print(f"  → Target Cluster: {target_cluster}")
     if cluster_colors is not None:
         try:
@@ -107,7 +107,7 @@ def print_region_examples(region_indices, S_all, P_all, max_examples=5):
     """
     Prints (S, P) pairs from selected region indices.
     """
-    print(f"\nShowing up to {max_examples} region examples:")
+    print(f"\n✅ Showing up to {max_examples} region examples:")
     for idx in region_indices[:max_examples]:
         print(f"  S[{idx}] = {S_all[idx].numpy()}")
         print(f"  P[{idx}] = {P_all[idx].numpy()}\n")

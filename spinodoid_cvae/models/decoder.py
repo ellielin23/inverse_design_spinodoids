@@ -11,7 +11,7 @@ class Decoder(nn.Module):
     and outputs a predicted structure vector S-hat.
     """
 
-    def __init__(self, S_dim, P_dim, latent_dim, dec_hidden_dims):
+    def __init__(self, S_dim, P_dim, latent_dim, dec_hidden_dims, dropout_prob=0.1):
         """
         Initialize the decoder network.
 
@@ -19,6 +19,8 @@ class Decoder(nn.Module):
             S_dim (int): Dimension of the structure parameters.
             P_dim (int): Dimension of the target properties.
             latent_dim (int): Dimension of the latent space.
+            dec_hidden_dims (list): List of hidden layer sizes.
+            dropout_prob (float): Dropout probability (default 0.1)
         """
         super(Decoder, self).__init__()
         input_dim = latent_dim + P_dim
@@ -29,6 +31,7 @@ class Decoder(nn.Module):
         for hidden_dim in dec_hidden_dims: # change
             layers.append(nn.Linear(prev_dim, hidden_dim))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))
             prev_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
 

@@ -11,16 +11,17 @@ DECODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for decoder
 
 # === training hyperparameters ===
 BATCH_SIZE = 64
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 100
-BETA = 0.0             # KL divergence weighting
-NUM_FLOWS = 4
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 200
+BETA = 0.5             # KL divergence weighting
+NUM_FLOWS = 20
+DROPOUT_PROB = 0.1
 
 # === data ===
 DATA_PATH = "data/large_dataset.csv"
 
 # === checkpoint paths ===
-TRIAL = 11
+TRIAL = 13
 CHECKPOINT_DIR_PATH = f'checkpoints/trial_{TRIAL}'
 ENCODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt'
 DECODER_SAVE_PATH = f'{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt'
