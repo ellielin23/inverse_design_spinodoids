@@ -2,7 +2,7 @@
 
 # === model selection ===
 MODEL = "flow"
-TRIAL = 1
+TRIAL = 5
 
 # === model dimensions ===
 S_DIM = 4  # structure parameter dimension
@@ -11,9 +11,9 @@ HIDDEN_DIMS = [128, 64, 32] # hidden dimensions of the neural network
 NUM_FLOWS = 3 # number of planar flows
 
 # === training hyperparameters ===
-BATCH_SIZE = 64
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 500
+BATCH_SIZE = 32
+LEARNING_RATE = 5e-4
+NUM_EPOCHS = 1000
 BETA_VAR_REG = 1e-2 # regularization parameter for variance
 
 # === data ===
