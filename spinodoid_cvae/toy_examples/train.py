@@ -10,21 +10,38 @@ from models.encoder import Encoder
 from models.decoder import Decoder
 from utils.dataset_C111 import SpinodoidC111Dataset
 from utils.dataset_C212 import SpinodoidC212Dataset
-from utils.loss import total_loss
+from utils.loss import total_loss_with_forward
 from config import *
 
 # === load dataset ===
-dataset = SpinodoidC111Dataset(DATA_PATH)
-# dataset = SpinodoidC212Dataset(DATA_PATH)
+# dataset = SpinodoidC111Dataset(DATA_PATH)
+dataset = SpinodoidC212Dataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize models ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
 decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
 
+# === load Max’s fNN model ===
+from utils.fNN_layers import *  # custom Keras layers
+import tensorflow as tf
+
+custom_objects = {
+    'PermutationEquivariantLayer': PermutationEquivariantLayer,
+    'DoubleContractionLayer': DoubleContractionLayer,
+    'EnforceIsotropyLayer': EnforceIsotropyLayer,
+    'NormalizationLayer': NormalizationLayer
+}
+
+fNN = tf.keras.models.load_model('utils/max_fNN.h5', custom_objects=custom_objects)
+
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
 optimizer = optim.Adam(params, lr=LEARNING_RATE)
+
+# === scheduler ===
+from torch.optim.lr_scheduler import StepLR
+scheduler = StepLR(optimizer, step_size=20, gamma=0.5)  # decay LR by 0.5 every 20 epochs
 
 # === reparameterization trick ===
 def reparameterize(mu, logvar):
@@ -57,13 +74,16 @@ for epoch in range(NUM_EPOCHS):
         S_hat = decoder(z, P_batch)
 
         # compute loss
-        loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, BETA)
+        loss, rec, kl, fwd = total_loss_with_forward(S_hat, S_batch, mu, logvar, P_batch, fNN, COMPONENT_NAME, beta=BETA, lamb=1.0)
+
         loss.backward()
         optimizer.step()
 
         total_loss_epoch += loss.item()
         total_rec_loss += rec.item()
         total_kl_loss += kl.item()
+
+    scheduler.step()
 
     print(f"Epoch {epoch+1:03d} | Loss: {total_loss_epoch:.4f} | Rec: {total_rec_loss:.4f} | KL: {total_kl_loss:.4f}")
     losses.append(total_loss_epoch)

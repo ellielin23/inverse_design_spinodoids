@@ -5,7 +5,7 @@ DATA_PATH = "data/large_dataset.csv"
 
 # === model save paths ===
 COMPONENT_NAME = "C111"
-TRIAL = 4
+TRIAL = 10
 CHECKPOINT_DIR_PATH = f"checkpoints/{COMPONENT_NAME}_trial_{TRIAL}"
 ENCODER_SAVE_PATH = f"{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt"
 DECODER_SAVE_PATH = f"{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt"
@@ -24,4 +24,4 @@ DECODER_HIDDEN_DIMS = [128, 64, 32]
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 100
-BETA = 1.0        # Weight for KL divergence
+BETA = 1.0
