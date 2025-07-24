@@ -4,19 +4,21 @@
 DATA_PATH = "data/large_dataset.csv"
 
 # === model save paths ===
-TRIAL = 1
-CHECKPOINT_DIR_PATH = f"toy_examples/predict_C111/checkpoints/C111_trial_{TRIAL}"
+COMPONENT_NAME = "C111"
+TRIAL = 4
+CHECKPOINT_DIR_PATH = f"checkpoints/{COMPONENT_NAME}_trial_{TRIAL}"
 ENCODER_SAVE_PATH = f"{CHECKPOINT_DIR_PATH}/encoder_ckpt_{TRIAL}.pt"
 DECODER_SAVE_PATH = f"{CHECKPOINT_DIR_PATH}/decoder_ckpt_{TRIAL}.pt"
 CONFIG_SAVE_PATH = f"{CHECKPOINT_DIR_PATH}/config_{TRIAL}.txt"
 
 # === dimensions ===
-S_DIM = 4        # Structure vector: 3 spatial + 1 volume ratio
-P_DIM = 1        # Only predicting the C111 component
+S_DIM = 4
+P_DIM = 1        # only predicting the C111 component
+LATENT_DIM = 4
 
 # === architecture ===
-ENCODER_HIDDEN_DIMS = [64, 32]
-DECODER_HIDDEN_DIMS = [32, 64]
+ENCODER_HIDDEN_DIMS = [128, 64, 32]
+DECODER_HIDDEN_DIMS = [128, 64, 32]
 
 # === training ===
 BATCH_SIZE = 64
