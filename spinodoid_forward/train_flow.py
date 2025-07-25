@@ -14,6 +14,7 @@ from torch.optim.lr_scheduler import StepLR
 
 # === sanity check ===
 assert MODEL.lower() == "flow", f"train_flow.py should only be used with MODEL='flow', but got '{MODEL}'"
+assert FLOW_TYPE in ["planar", "maf", "realnvp"], f"Invalid FLOW_TYPE: {FLOW_TYPE}"
 
 # === setup device ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -23,7 +24,7 @@ dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === initialize model and optimizer ===
-model = FlowForwardModel(S_DIM, P_DIM, hidden_dims=HIDDEN_DIMS, num_flows=NUM_FLOWS).to(device)
+model = FlowForwardModel(S_DIM, P_DIM, hidden_dims=HIDDEN_DIMS, num_flows=NUM_FLOWS, flow_type=FLOW_TYPE).to(device)
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 scheduler = StepLR(optimizer, step_size=100, gamma=0.5)
 
@@ -74,6 +75,7 @@ with open(SAVE_CONFIG_PATH, "w") as f:
     f.write(f"P_DIM: {P_DIM}\n")
     f.write(f"HIDDEN_DIMS: {HIDDEN_DIMS}\n")
     f.write(f"NUM_FLOWS: {NUM_FLOWS}\n")
+    f.write(f"FLOW_TYPE: {FLOW_TYPE}\n")
     f.write(f"BATCH_SIZE: {BATCH_SIZE}\n")
     f.write(f"LEARNING_RATE: {LEARNING_RATE}\n")
     f.write(f"NUM_EPOCHS: {NUM_EPOCHS}\n")

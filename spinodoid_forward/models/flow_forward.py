@@ -1,18 +1,22 @@
+# models/flow_forward.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils.planar_flow import PlanarFlow
+from utils.flow_layers import get_flow_layers
+
 
 class FlowForwardModel(nn.Module):
     """
-    Forward model using Normalizing Flows.
-    Learns p(P | S) by transforming a base Gaussian using a stack of Planar Flows.
+    Forward model using Normalizing Flows (Planar, MAF, or RealNVP via nflows).
+    Learns p(P | S) by transforming a base Gaussian using flows conditioned on S.
     """
-    def __init__(self, S_dim, P_dim, hidden_dims, num_flows):
+    def __init__(self, S_dim, P_dim, hidden_dims, num_flows, flow_type="planar"):
         super(FlowForwardModel, self).__init__()
         self.S_dim = S_dim
         self.P_dim = P_dim
         self.num_flows = num_flows
+        self.flow_type = flow_type.lower()
 
         # base MLP to generate mean and log_sigma from structure S
         layers = []
@@ -26,8 +30,8 @@ class FlowForwardModel(nn.Module):
         self.mu_layer = nn.Linear(input_dim, P_dim)
         self.log_sigma_layer = nn.Linear(input_dim, P_dim)
 
-        # stack of planar flows
-        self.flows = nn.ModuleList([PlanarFlow(P_dim) for _ in range(num_flows)])
+        # initialize flows
+        self.flows = get_flow_layers(P_dim, num_flows, flow_type=flow_type)
 
     def forward(self, S):
         """
@@ -52,14 +56,16 @@ class FlowForwardModel(nn.Module):
         # base log prob
         log_prob_z0 = -0.5 * (((z0 - mu) / sigma) ** 2 + 2 * log_sigma + torch.log(torch.tensor(2 * torch.pi))).sum(dim=1)
 
-        # apply flows
-        zk = z0
-        log_det_sum = 0.
-        for flow in self.flows:
-            zk, log_det = flow(zk)
-            log_det_sum += log_det
-
-        # log prob under full flow
-        log_q = log_prob_z0 - log_det_sum
+        # apply flow
+        if self.flow_type == "planar":
+            zk = z0
+            log_det_sum = 0.
+            for flow in self.flows:
+                zk, log_det = flow(zk)
+                log_det_sum += log_det
+            log_q = log_prob_z0 - log_det_sum
+        else:
+            zk, log_det = self.flows.forward(z0)
+            log_q = log_prob_z0 - log_det.sum(dim=1)
 
         return zk, log_q, mu, log_sigma
