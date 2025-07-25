@@ -1,3 +1,5 @@
+# train.py
+
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -7,7 +9,7 @@ import os
 from models.encoder import Encoder
 from models.decoder import Decoder
 from models.flow_decoder import FlowDecoder
-from utils.dataset import SpinodoidDataset
+from utils.data_utils.dataset import SpinodoidDataset
 from utils.loss import total_loss
 from config import *
 
@@ -15,10 +17,22 @@ from config import *
 dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-# === initialize models ===
+# === initialize encoder ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
-decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
-# decoder = FlowDecoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, NUM_FLOWS, DROPOUT_PROB)
+
+# === initialize decoder (regular or flow) ===
+if USE_FLOW_DECODER:
+    decoder = FlowDecoder(
+        S_dim=S_DIM,
+        P_dim=P_DIM,
+        latent_dim=LATENT_DIM,
+        dec_hidden_dims=DECODER_HIDDEN_DIMS,
+        num_flows=NUM_FLOWS,
+        dropout_prob=DROPOUT_PROB,
+        flow_type=FLOW_TYPE
+    )
+else:
+    decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -47,15 +61,18 @@ for epoch in range(NUM_EPOCHS):
     for P_batch, S_batch in dataloader:
         optimizer.zero_grad()
 
-        # encode S and P → z distribution
+        # encode
         mu, logvar = encoder(S_batch, P_batch)
         z = reparameterize(mu, logvar)
 
-        # decode z and P → predicted S
-        S_hat = decoder(z, P_batch)  # NEED TO CHANGE THIS IF NOT FLOW DECODER
+        # decode and compute loss
+        if USE_FLOW_DECODER:
+            S_hat, log_det = decoder(z, P_batch)
+            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, log_det=log_det, beta=BETA)
+        else:
+            S_hat = decoder(z, P_batch)
+            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, beta=BETA)
 
-        # compute loss
-        loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar)
         loss.backward()
         optimizer.step()
 
@@ -81,14 +98,12 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
-# === ensure checkpoint directory exists ===
-os.makedirs(CHECKPOINT_DIR_PATH, exist_ok=True)
-
 # === save model checkpoints ===
+os.makedirs(CHECKPOINT_DIR_PATH, exist_ok=True)
 torch.save(encoder.state_dict(), ENCODER_SAVE_PATH)
 torch.save(decoder.state_dict(), DECODER_SAVE_PATH)
 
-# === save config.txt ===
+# === save config ===
 config_dict = {
     "S_DIM": S_DIM,
     "P_DIM": P_DIM,
@@ -100,7 +115,8 @@ config_dict = {
     "NUM_EPOCHS": NUM_EPOCHS,
     "BETA": BETA,
     "NUM_FLOWS": NUM_FLOWS,
-    "DROPOUT_PROB": DROPOUT_PROB
+    "DROPOUT_PROB": DROPOUT_PROB,
+    "USE_FLOW_DECODER": USE_FLOW_DECODER,
 }
 
 with open(CONFIG_SAVE_PATH, "w") as f:

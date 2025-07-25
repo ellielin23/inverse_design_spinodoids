@@ -1,4 +1,4 @@
-# utils/visualize_output.py
+# utils/evaluate_utils/visualize_output.py
 
 import numpy as np
 import matplotlib.pyplot as plt

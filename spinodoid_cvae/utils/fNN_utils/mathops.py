@@ -1,3 +1,5 @@
+# utils/fNN_utils/mathops.py
+
 """Copyright 2024-2025 Max Rosenkranz (Dresden University of Technology)
 Licensed under the MIT License. See LICENSE file in the project root for full license text or visit
 https://mit-license.org/

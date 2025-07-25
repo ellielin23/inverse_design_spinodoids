@@ -1,6 +1,8 @@
+# utils/data_utils/dataset.py
+
 import torch
 from torch.utils.data import Dataset
-from utils.load_data import load_dataset
+from utils.data_utils.load_data import load_dataset
 
 class SpinodoidDataset(Dataset):
     """

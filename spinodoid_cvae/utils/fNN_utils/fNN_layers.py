@@ -1,3 +1,5 @@
+# utils/fNN_utils/fNN_layers.py
+
 # === max's original code ===
 
 """Copyright 2024-2025 Max Rosenkranz (Dresden University of Technology)
@@ -7,13 +9,10 @@ https://mit-license.org/
 Includes the layers the surrogate model is composed of.
 """
 
+import tensorflow as tf
 from functools import partial
 from itertools import permutations, product
-
-import tensorflow as tf
-
-from utils.mathops import dyad
-
+from utils.fNN_utils.mathops import dyad
 
 @tf.keras.utils.register_keras_serializable()
 class PermutationEquivariantLayer(tf.keras.layers.Layer):

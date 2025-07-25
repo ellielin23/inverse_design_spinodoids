@@ -1,4 +1,4 @@
-# utils/sampling.py
+# utils/evaluate_utils/sampling.py
 
 import torch
 import numpy as np

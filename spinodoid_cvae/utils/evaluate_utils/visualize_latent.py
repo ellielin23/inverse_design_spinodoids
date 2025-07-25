@@ -1,4 +1,4 @@
-# utils/visualize_latent.py
+# utils/evaluate_utils/visualize_latent.py
 
 import numpy as np
 import torch
