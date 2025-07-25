@@ -2,7 +2,7 @@
 
 # === model selection ===
 MODEL = "flow"       # options: "flow", "gaussian"
-FLOW_TYPE = "maf" # options: "planar", "maf", "realnvp"
+FLOW_TYPE = "planar" # options: "planar", "maf", "realnvp"
 TRIAL = 5
 
 # === model dimensions ===
@@ -14,7 +14,7 @@ NUM_FLOWS = 3 # number of flow layers
 # === training hyperparameters ===
 BATCH_SIZE = 32
 LEARNING_RATE = 5e-4
-NUM_EPOCHS = 1000
+NUM_EPOCHS = 500
 BETA_VAR_REG = 1e-2 # regularization parameter for variance
 
 # === data ===

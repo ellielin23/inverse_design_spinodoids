@@ -75,7 +75,6 @@ with open(SAVE_CONFIG_PATH, "w") as f:
     f.write(f"P_DIM: {P_DIM}\n")
     f.write(f"HIDDEN_DIMS: {HIDDEN_DIMS}\n")
     f.write(f"NUM_FLOWS: {NUM_FLOWS}\n")
-    f.write(f"FLOW_TYPE: {FLOW_TYPE}\n")
     f.write(f"BATCH_SIZE: {BATCH_SIZE}\n")
     f.write(f"LEARNING_RATE: {LEARNING_RATE}\n")
     f.write(f"NUM_EPOCHS: {NUM_EPOCHS}\n")

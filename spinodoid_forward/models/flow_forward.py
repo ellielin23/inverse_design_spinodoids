@@ -31,7 +31,7 @@ class FlowForwardModel(nn.Module):
         self.log_sigma_layer = nn.Linear(input_dim, P_dim)
 
         # initialize flows
-        self.flows = get_flow_layers(P_dim, num_flows, flow_type=flow_type)
+        self.flows = get_flow_layers(P_dim, num_flows, flow_type=flow_type, hidden_dims=hidden_dims)
 
     def forward(self, S):
         """
@@ -66,6 +66,6 @@ class FlowForwardModel(nn.Module):
             log_q = log_prob_z0 - log_det_sum
         else:
             zk, log_det = self.flows.forward(z0)
-            log_q = log_prob_z0 - log_det.sum(dim=1)
+            log_q = log_prob_z0 - log_det  # if log_det is already shape (batch_size,)
 
         return zk, log_q, mu, log_sigma
