@@ -66,18 +66,20 @@ def plot_all_P_preds_vs_true(P_preds, P_true):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
 
-def evaluate_peaks(S_hat_peaks, P_target, fNN, extract_target_properties):
+def evaluate_peaks(S_hat_peaks, P_target, fNN, extract_target_properties, P_mean, P_std):
     """
-    Evaluates each peak \hat{S} using Max's fNN and prints per-peak error metrics.
-
+    Evaluates each peak Ŝ using Max's fNN and prints per-peak error metrics in unnormalized space.
     Returns:
-        - P_preds: list of predicted P vectors
-        - errors: list of L2 errors
-        - mses: list of MSEs
+        - P_preds: list of predicted P vectors (unnormalized)
+        - errors: list of L2 errors (unnormalized)
+        - mses: list of MSEs (unnormalized)
     """
     P_preds = []
     errors = []
     mses = []
+
+    # unnormalize ground truth
+    P_target_unnorm = P_target * P_std + P_mean
 
     print(f"{'Peak':<6} {'||P_pred - P_true||':<22} {'MSE (per peak)':<15}")
     print("-" * 45)
@@ -85,16 +87,21 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, extract_target_properties):
     for i, S_peak in enumerate(S_hat_peaks):
         S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
         C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-        P_pred = extract_target_properties(C_pred)[0]
+        P_pred_norm = extract_target_properties(C_pred)[0]
+
+        # unnormalize prediction
+        P_pred = P_pred_norm * P_std + P_mean
         P_preds.append(P_pred)
 
-        l2_error = np.linalg.norm(P_pred - P_target)
-        mse = np.mean((P_pred - P_target) ** 2)
+        l2_error = np.linalg.norm(P_pred - P_target_unnorm)
+        mse = np.mean((P_pred - P_target_unnorm) ** 2)
         errors.append(l2_error)
         mses.append(mse)
 
         print(f"{i:<6} {l2_error:<22.4f} {mse:<15.4f}")
 
     mean_mse = np.mean(mses)
-    print(f"\n✅ Mean MSE across all peaks: {mean_mse:.4f}")
+    print(f"\n✅ Mean MSE across all peaks (unnormalized): {mean_mse:.4f}")
     return P_preds, errors, mses
+
+

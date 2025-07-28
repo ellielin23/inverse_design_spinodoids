@@ -5,6 +5,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 from models.encoder import Encoder
 from models.decoder import Decoder
@@ -16,6 +17,10 @@ from config import *
 # === load dataset ===
 dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+# === load P mean/std for normalization ===
+P_mean = torch.tensor(np.load("data/P_mean.npy"), dtype=torch.float32)
+P_std = torch.tensor(np.load("data/P_std.npy"), dtype=torch.float32)
 
 # === initialize encoder ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
@@ -62,15 +67,17 @@ for epoch in range(NUM_EPOCHS):
         optimizer.zero_grad()
 
         # encode
-        mu, logvar = encoder(S_batch, P_batch)
+        P_batch_norm = (P_batch - P_mean) / P_std
+        mu, logvar = encoder(S_batch, P_batch_norm)
+
         z = reparameterize(mu, logvar)
 
         # decode and compute loss
         if USE_FLOW_DECODER:
-            S_hat, log_det = decoder(z, P_batch)
+            S_hat, log_det = decoder(z, P_batch_norm)
             loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, log_det=log_det, beta=BETA)
         else:
-            S_hat = decoder(z, P_batch)
+            S_hat = decoder(z, P_batch_norm)
             loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, beta=BETA)
 
         loss.backward()

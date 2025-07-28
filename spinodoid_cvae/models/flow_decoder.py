@@ -18,7 +18,7 @@ class FlowDecoder(nn.Module):
         prev_dim = input_dim
         for h in dec_hidden_dims:
             layers.append(nn.Linear(prev_dim, h))
-            layers.append(nn.Tanh())
+            layers.append(nn.ReLU())
             layers.append(nn.Dropout(dropout_prob))
             prev_dim = h
         self.hidden_layers = nn.Sequential(*layers)
