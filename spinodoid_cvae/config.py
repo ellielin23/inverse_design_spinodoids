@@ -3,7 +3,7 @@
 # === flow type ===
 USE_FLOW_DECODER = True
 FLOW_TYPE = "realnvp"
-TRIAL = 6
+TRIAL = 7
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension

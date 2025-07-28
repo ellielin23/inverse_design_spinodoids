@@ -9,10 +9,13 @@ class FlowDecoder(nn.Module):
         self.latent_dim = latent_dim
         self.flow_type = flow_type.lower()
 
-        # === Flow layers ===
+        # === flow layers ===
         self.flows = get_flow_layers(latent_dim, num_flows, flow_type=self.flow_type, hidden_dims=dec_hidden_dims)
 
-        # === Fully connected decoder network ===
+        # === attention layer ===
+        self.attn = nn.MultiheadAttention(embed_dim=latent_dim + P_dim, num_heads=1, batch_first=True)
+
+        # === fully connected decoder network (with attention) ===
         input_dim = latent_dim + P_dim
         layers = []
         prev_dim = input_dim
@@ -44,8 +47,15 @@ class FlowDecoder(nn.Module):
             z, log_det = self.flows(z0)
             log_det_sum = log_det
 
-        # Decoder
-        x = torch.cat([z, P], dim=1)
+        # # decoder
+        # x = torch.cat([z, P], dim=1)
+        # x = self.hidden_layers(x)
+        # S_hat = self.output_layer(x)
+
+        x = torch.cat([z, P], dim=1)  # shape: (batch_size, latent_dim + P_dim)
+        x = x.unsqueeze(1)            # shape: (batch_size, seq_len=1, features)
+        x, _ = self.attn(x, x, x)     # apply attention
+        x = x.squeeze(1)              # back to shape: (batch_size, features)
         x = self.hidden_layers(x)
         S_hat = self.output_layer(x)
 
