@@ -1,9 +1,10 @@
 # config.py
 
 # === flow type ===
+USE_ATTENTION = True
 USE_FLOW_DECODER = True
-FLOW_TYPE = "realnvp"
-TRIAL = 7
+FLOW_TYPE = "maf"
+TRIAL = 8
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension

@@ -8,36 +8,36 @@ import os
 import numpy as np
 
 from models.encoder import Encoder
-from models.decoder import Decoder
-from models.flow_decoder import FlowDecoder
+from utils.model_utils import get_decoder
 from utils.data_utils.dataset import SpinodoidDataset
 from utils.loss import total_loss
 from config import *
 
-# === load dataset ===
+# === load dataset and device ===
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === load P mean/std for normalization ===
-P_mean = torch.tensor(np.load("data/P_mean.npy"), dtype=torch.float32)
-P_std = torch.tensor(np.load("data/P_std.npy"), dtype=torch.float32)
+P_mean = torch.tensor(np.load("data/P_mean.npy"), dtype=torch.float32, device=device)
+P_std = torch.tensor(np.load("data/P_std.npy"), dtype=torch.float32, device=device)
 
 # === initialize encoder ===
 encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
 
 # === initialize decoder (regular or flow) ===
-if USE_FLOW_DECODER:
-    decoder = FlowDecoder(
-        S_dim=S_DIM,
-        P_dim=P_DIM,
-        latent_dim=LATENT_DIM,
-        dec_hidden_dims=DECODER_HIDDEN_DIMS,
-        num_flows=NUM_FLOWS,
-        dropout_prob=DROPOUT_PROB,
-        flow_type=FLOW_TYPE
-    )
-else:
-    decoder = Decoder(S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS)
+decoder = get_decoder(
+    use_flow=USE_FLOW_DECODER,
+    use_attention=USE_ATTENTION,
+    S_dim=S_DIM,
+    P_dim=P_DIM,
+    latent_dim=LATENT_DIM,
+    hidden_dims=DECODER_HIDDEN_DIMS,
+    num_flows=NUM_FLOWS,
+    dropout_prob=DROPOUT_PROB,
+    flow_type=FLOW_TYPE,
+    device=device
+)
 
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
@@ -124,6 +124,7 @@ config_dict = {
     "NUM_FLOWS": NUM_FLOWS,
     "DROPOUT_PROB": DROPOUT_PROB,
     "USE_FLOW_DECODER": USE_FLOW_DECODER,
+    "USE_ATTENTION": USE_ATTENTION,
 }
 
 with open(CONFIG_SAVE_PATH, "w") as f:

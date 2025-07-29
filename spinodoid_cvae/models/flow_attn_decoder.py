@@ -1,20 +1,23 @@
-# models/flow_decoder.py
+# models/flow_attn_decoder.py
 
 import torch
 import torch.nn as nn
 from utils.flow_utils.flow_layers import get_flow_layers
 from utils.flow_utils.planar_flow import PlanarFlow
 
-class FlowDecoder(nn.Module):
+class FlowAttnDecoder(nn.Module):
     def __init__(self, S_dim, P_dim, latent_dim, dec_hidden_dims, num_flows=4, dropout_prob=0.1, flow_type="planar"):
-        super(FlowDecoder, self).__init__()
+        super(FlowAttnDecoder, self).__init__()
         self.latent_dim = latent_dim
         self.flow_type = flow_type.lower()
 
         # === flow layers ===
         self.flows = get_flow_layers(latent_dim, num_flows, flow_type=self.flow_type, hidden_dims=dec_hidden_dims)
 
-        # === fully connected decoder network (WITHOUT attention) ===
+        # === attention layer ===
+        self.attn = nn.MultiheadAttention(embed_dim=latent_dim + P_dim, num_heads=1, batch_first=True)
+
+        # === fully connected decoder network (with attention) ===
         input_dim = latent_dim + P_dim
         layers = []
         prev_dim = input_dim
@@ -46,8 +49,15 @@ class FlowDecoder(nn.Module):
             z, log_det = self.flows(z0)
             log_det_sum = log_det
 
-        # decoder
-        x = torch.cat([z, P], dim=1)
+        # # decoder
+        # x = torch.cat([z, P], dim=1)
+        # x = self.hidden_layers(x)
+        # S_hat = self.output_layer(x)
+
+        x = torch.cat([z, P], dim=1)  # shape: (batch_size, latent_dim + P_dim)
+        x = x.unsqueeze(1)            # shape: (batch_size, seq_len=1, features)
+        x, _ = self.attn(x, x, x)     # apply attention
+        x = x.squeeze(1)              # back to shape: (batch_size, features)
         x = self.hidden_layers(x)
         S_hat = self.output_layer(x)
 
