@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from sklearn.cluster import MeanShift
 
-def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, device='cpu'):
+def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, seed=None, device='cpu'):
     """
     Samples structure vectors S_hat from the decoder given a property vector P_val.
     Works with both Decoder and FlowDecoder.
@@ -20,6 +20,8 @@ def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, device='cpu'):
         np.ndarray: Array of sampled S_hat vectors, shape (num_samples, S_dim).
     """
     P_tensor = P_val.repeat(num_samples, 1).to(device)
+    if seed is not None:
+        torch.manual_seed(seed)
     z_samples = torch.randn((num_samples, latent_dim)).to(device)
     with torch.no_grad():
         S_hats = decoder(z_samples, P_tensor)

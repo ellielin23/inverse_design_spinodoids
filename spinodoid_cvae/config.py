@@ -1,10 +1,10 @@
 # config.py
 
 # === flow type ===
-USE_ATTENTION = True
+USE_ATTENTION = False
 USE_FLOW_DECODER = True
-FLOW_TYPE = "maf"
-TRIAL = 8
+FLOW_TYPE = "planar"
+TRIAL = 1
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension

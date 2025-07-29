@@ -49,11 +49,6 @@ class FlowAttnDecoder(nn.Module):
             z, log_det = self.flows(z0)
             log_det_sum = log_det
 
-        # # decoder
-        # x = torch.cat([z, P], dim=1)
-        # x = self.hidden_layers(x)
-        # S_hat = self.output_layer(x)
-
         x = torch.cat([z, P], dim=1)  # shape: (batch_size, latent_dim + P_dim)
         x = x.unsqueeze(1)            # shape: (batch_size, seq_len=1, features)
         x, _ = self.attn(x, x, x)     # apply attention

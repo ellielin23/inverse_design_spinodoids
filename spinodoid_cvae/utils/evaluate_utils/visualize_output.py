@@ -28,14 +28,55 @@ def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
     plt.tight_layout()
     plt.show()
 
+# def plot_all_P_preds_vs_true(P_preds, P_true):
+#     """
+#     Plots all P_pred vs P_true bar plots in a grid layout.
+
+#     Args:
+#         P_preds (list of np.ndarray): List of predicted property vectors (each shape (9,))
+#         P_true (np.ndarray): Ground-truth property vector (shape (9,))
+#     """
+#     labels = [
+#         "C1111", "C1122", "C1133", "C2222", "C2233", "C3333",
+#         "C1212", "C1313", "C2323"
+#     ]
+#     num_peaks = len(P_preds)
+#     cols = 3
+#     rows = (num_peaks + cols - 1) // cols
+#     width = 0.35
+#     x = np.arange(len(labels))
+
+#     fig, axs = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+#     axs = axs.flatten()
+
+#     for i in range(num_peaks):
+#         ax = axs[i]
+#         ax.bar(x - width/2, P_true, width, label='True P', color='lightcoral')
+#         ax.bar(x + width/2, P_preds[i], width, label='Predicted P', color='skyblue')
+#         ax.set_title(f"Peak {i + 1}")
+#         ax.set_xticks(x)
+#         ax.set_xticklabels(labels, rotation=45)
+#         ax.grid(True, axis='y', linestyle='--', alpha=0.6)
+
+#     for j in range(num_peaks, len(axs)):
+#         axs[j].axis('off')
+
+#     axs[0].legend(loc='upper right')
+#     fig.suptitle("Elastic Components: Predicted vs True for All Peaks", fontsize=16)
+#     plt.tight_layout(rect=[0, 0, 1, 0.95])
+#     plt.show()
+
 def plot_all_P_preds_vs_true(P_preds, P_true):
     """
-    Plots all P_pred vs P_true bar plots in a grid layout.
+    Plots all P_pred vs P_true bar plots in a clean, professional grid layout.
 
     Args:
         P_preds (list of np.ndarray): List of predicted property vectors (each shape (9,))
         P_true (np.ndarray): Ground-truth property vector (shape (9,))
     """
+    sns.set_context("notebook")
+    sns.set_style("whitegrid")
+
     labels = [
         "C1111", "C1122", "C1133", "C2222", "C2233", "C3333",
         "C1212", "C1313", "C2323"
@@ -46,25 +87,36 @@ def plot_all_P_preds_vs_true(P_preds, P_true):
     width = 0.35
     x = np.arange(len(labels))
 
-    fig, axs = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+    fig, axs = plt.subplots(rows, cols, figsize=(6 * cols, 3.8 * rows))
     axs = axs.flatten()
 
     for i in range(num_peaks):
         ax = axs[i]
-        ax.bar(x - width/2, P_true, width, label='True P', color='lightcoral')
-        ax.bar(x + width/2, P_preds[i], width, label='Predicted P', color='skyblue')
-        ax.set_title(f"Peak {i + 1}")
+        ax.bar(x - width/2, P_true, width, label='True', color='#E24A33')
+        ax.bar(x + width/2, P_preds[i], width, label='Predicted', color='#348ABD')
+        ax.set_title(f"Peak {i + 1}", fontsize=13, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=45)
-        ax.grid(True, axis='y', linestyle='--', alpha=0.6)
+        ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=10)
+        ax.tick_params(axis='y', labelsize=10)
+        ax.set_ylim(min(P_true.min(), *[p.min() for p in P_preds]) * 0.95,
+                    max(P_true.max(), *[p.max() for p in P_preds]) * 1.05)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.grid(True, axis='y', linestyle='--', alpha=0.5)
 
+    # Remove unused subplots
     for j in range(num_peaks, len(axs)):
         axs[j].axis('off')
 
-    axs[0].legend(loc='upper right')
-    fig.suptitle("Elastic Components: Predicted vs True for All Peaks", fontsize=16)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    # Put legend only once
+    handles, labels = axs[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=2, fontsize=12)
+
+    fig.suptitle("Predicted vs True Elastic Constants for Each Peak", fontsize=16, fontweight='bold', y=1.02)
+    plt.tight_layout(rect=[0, 0, 1, 0.98])
     plt.show()
+
+
 
 def evaluate_peaks(S_hat_peaks, P_target, fNN, extract_target_properties, P_mean, P_std):
     """
