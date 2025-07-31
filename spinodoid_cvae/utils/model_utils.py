@@ -50,3 +50,22 @@ def get_decoder(use_flow, use_attention, S_dim, P_dim, latent_dim,
         decoder = Decoder(S_dim, P_dim, latent_dim, hidden_dims)
 
     return decoder.to(device)
+
+from models.encoder import Encoder
+from models.attn_encoder import AttnEncoder
+
+def get_encoder(use_attention, S_dim, P_dim, latent_dim, hidden_dims):
+    """
+    Returns the appropriate encoder instance based on configuration.
+
+    Args:
+        use_attention (bool): If True, use attention-based encoder.
+        S_dim (int): Structure parameter dimension.
+        P_dim (int): Property dimension.
+        latent_dim (int): Latent space dimension.
+        hidden_dims (list): Hidden layer dimensions.
+    """
+    if use_attention:
+        return AttnEncoder(S_dim, P_dim, latent_dim, hidden_dims)
+    else:
+        return Encoder(S_dim, P_dim, latent_dim, hidden_dims)

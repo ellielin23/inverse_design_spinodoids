@@ -42,3 +42,27 @@ def get_S_hat_peaks(S_hats, bandwidth=5.0):
     ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
     ms.fit(S_hats)
     return ms.cluster_centers_
+
+
+def auto_select_bandwidth(S_hats, target_range=(5, 8), search_space=None):
+    """
+    Automatically selects a bandwidth that yields a number of peaks in the desired range.
+    
+    Args:
+        S_hats (ndarray): Sampled structure vectors (num_samples, S_dim)
+        target_range (tuple): Desired number of peaks (min, max)
+        search_space (iterable or None): Bandwidth values to search over
+    
+    Returns:
+        selected_bw (float or None): Chosen bandwidth
+        peaks (ndarray): Cluster centers at chosen bandwidth
+    """
+    if search_space is None:
+        search_space = np.linspace(0.1, 20.0, 200)
+
+    for bw in search_space:
+        peaks = get_S_hat_peaks(S_hats, bandwidth=bw)
+        if target_range[0] <= len(peaks) <= target_range[1]:
+            return bw, peaks
+
+    return None, None

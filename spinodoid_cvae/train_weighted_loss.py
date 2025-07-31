@@ -8,9 +8,18 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-from utils.model_utils import get_encoder, get_decoder
+import tensorflow as tf
+from utils.fNN_utils.fNN_layers import (
+    PermutationEquivariantLayer,
+    DoubleContractionLayer,
+    EnforceIsotropyLayer,
+    NormalizationLayer
+)
+
+from models.encoder import Encoder
+from utils.model_utils import get_decoder
 from utils.data_utils.dataset import SpinodoidDataset
-from utils.loss import total_loss, get_kl_beta
+from utils.loss import total_loss, forward_consistency_loss
 from config import *
 
 # === load dataset and device ===
@@ -18,18 +27,22 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dataset = SpinodoidDataset(DATA_PATH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
+# === load Max's fNN model ===
+custom_objects = {
+    'PermutationEquivariantLayer': PermutationEquivariantLayer,
+    'DoubleContractionLayer': DoubleContractionLayer,
+    'EnforceIsotropyLayer': EnforceIsotropyLayer,
+    'NormalizationLayer': NormalizationLayer
+}
+
+fNN = tf.keras.models.load_model('utils/fNN_utils/max_fNN.h5', custom_objects=custom_objects)
+
 # === load P mean/std for normalization ===
 P_mean = torch.tensor(np.load("data/P_mean.npy"), dtype=torch.float32, device=device)
 P_std = torch.tensor(np.load("data/P_std.npy"), dtype=torch.float32, device=device)
 
 # === initialize encoder ===
-encoder = get_encoder(
-    use_attention=USE_ATTENTION,
-    S_dim=S_DIM,
-    P_dim=P_DIM,
-    latent_dim=LATENT_DIM,
-    hidden_dims=ENCODER_HIDDEN_DIMS
-)
+encoder = Encoder(S_DIM, P_DIM, LATENT_DIM, ENCODER_HIDDEN_DIMS)
 
 # === initialize decoder (regular or flow) ===
 decoder = get_decoder(
@@ -48,7 +61,7 @@ decoder = get_decoder(
 # === optimizer ===
 params = list(encoder.parameters()) + list(decoder.parameters())
 optimizer = optim.Adam(params, lr=LEARNING_RATE)
-scheduler = StepLR(optimizer, step_size=30, gamma=0.5)  # decay every 30 epochs by 0.5×
+scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
 
 # === reparameterization trick ===
 def reparameterize(mu, logvar):
@@ -62,6 +75,7 @@ recon_losses = []
 kl_losses = []
 
 # === training loop ===
+fNN.trainable = False
 for epoch in range(NUM_EPOCHS):
     encoder.train()
     decoder.train()
@@ -79,15 +93,22 @@ for epoch in range(NUM_EPOCHS):
 
         z = reparameterize(mu, logvar)
 
-        # === use KL warm-up ===
-        beta = get_kl_beta(epoch, warmup_epochs=20, max_beta=10.0)  # can adjust warmup_epochs
-
+        # decode and compute loss
         if USE_FLOW_DECODER:
             S_hat, log_det = decoder(z, P_batch_norm)
-            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, log_det=log_det, beta=beta)
+            loss_cvae, rec, kl = total_loss(S_hat, S_batch, mu, logvar, log_det=log_det, beta=BETA)
         else:
             S_hat = decoder(z, P_batch_norm)
-            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, beta=beta)
+            loss_cvae, rec, kl = total_loss(S_hat, S_batch, mu, logvar, beta=BETA)
+
+        # === forward consistency loss ===
+        P_target = P_batch  # unnormalized target
+        COMPONENT_WEIGHTS = [100.0, 1.0, 1.0, 300.0, 1.0, 100.0, 1.0, 1.0, 1.0]
+        loss_forward = forward_consistency_loss(S_hat, P_target, fNN, component_weights=COMPONENT_WEIGHTS)
+
+        # === total combined loss ===
+        lambda_forward = 1.5  # tune this value
+        loss = loss_cvae + lambda_forward * loss_forward
 
         loss.backward()
         optimizer.step()
@@ -97,8 +118,7 @@ for epoch in range(NUM_EPOCHS):
         total_kl_loss += kl.item()
 
     scheduler.step()
-    current_lr = scheduler.get_last_lr()[0]
-    print(f"Epoch {epoch+1:03d} | LR: {current_lr:.5e} | Loss: {total_loss_epoch:.4f} | Rec: {total_rec_loss:.4f} | KL: {total_kl_loss:.4f}")
+    print(f"Epoch {epoch+1:03d} | Loss: {total_loss_epoch:.4f} | Rec: {total_rec_loss:.4f} | KL: {total_kl_loss:.4f}")
     losses.append(total_loss_epoch)
     recon_losses.append(total_rec_loss)
     kl_losses.append(total_kl_loss)

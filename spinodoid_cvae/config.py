@@ -1,15 +1,15 @@
 # config.py
 
 # === flow type ===
-USE_ATTENTION = False
+USE_ATTENTION = True
 USE_FLOW_DECODER = True
-FLOW_TYPE = "planar"
-TRIAL = 1
+FLOW_TYPE = "realnvp"
+TRIAL = 19
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
 P_DIM = 9              # target property dimension
-LATENT_DIM = 4         # latent space dimension (can tune later)
+LATENT_DIM = 4        # latent space dimension (can tune later)
 
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder
@@ -17,11 +17,11 @@ DECODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for decoder
 NUM_FLOWS = 6
 
 # === training hyperparameters ===
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 80
-BETA = 0.01             # KL divergence weighting
-DROPOUT_PROB = 0.2
+NUM_EPOCHS = 100
+BETA = 10.0            # KL divergence weighting
+DROPOUT_PROB = 0.5
 
 # === data ===
 DATA_PATH = "data/large_dataset.csv"

@@ -53,7 +53,7 @@ def plot_latents(Z_2D, cluster_labels=None, cluster_colors=None):
     plt.figure(figsize=(6, 5))
 
     if cluster_labels is None:
-        plt.scatter(Z_2D[:, 0], Z_2D[:, 1], alpha=0.6, s=20, color='skyblue')
+        plt.scatter(Z_2D[:, 0], Z_2D[:, 1], alpha=0.6, s=20, color='lightgreen')
         plt.title("Latent Space Representation (t-SNE)")
     else:
         if cluster_colors is None:
