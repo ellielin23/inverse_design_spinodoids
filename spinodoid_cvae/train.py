@@ -24,7 +24,7 @@ P_std = torch.tensor(np.load("data/P_std.npy"), dtype=torch.float32, device=devi
 
 # === initialize encoder ===
 encoder = get_encoder(
-    use_attention=USE_ATTENTION,
+    use_attention=USE_ATTENTION_ENCODER,
     S_dim=S_DIM,
     P_dim=P_DIM,
     latent_dim=LATENT_DIM,
@@ -34,7 +34,7 @@ encoder = get_encoder(
 # === initialize decoder (regular or flow) ===
 decoder = get_decoder(
     use_flow=USE_FLOW_DECODER,
-    use_attention=USE_ATTENTION,
+    use_attention=USE_ATTENTION_DECODER,
     S_dim=S_DIM,
     P_dim=P_DIM,
     latent_dim=LATENT_DIM,

@@ -53,6 +53,39 @@ def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
     plt.show()
 
 
+def compare_top_k_S_peaks(S_hat_peaks, S_true, k=5):
+    """
+    Compares the top-k Ŝ peaks to the true structure S_true.
+
+    Args:
+        S_hat_peaks (np.ndarray): Array of Ŝ peak vectors, shape (n_peaks, S_dim)
+        S_true (np.ndarray): Ground truth S vector, shape (S_dim,)
+        k (int): Number of top peaks to compare (default = 5)
+
+    Returns:
+        pd.DataFrame: Table with columns ['Peak', 'Ŝ', 'S_true', 'ΔS']
+    """
+    k = min(k, len(S_hat_peaks))
+    rows = []
+
+    S_true_rounded = np.round(S_true, 5)
+
+    for i in range(k):
+        S_hat = np.round(S_hat_peaks[i], 5)
+        S_diff = np.round(S_hat_peaks[i] - S_true, 5)
+
+        rows.append({
+            "Peak": f"{i+1}",
+            "Ŝ": S_hat,
+            "S_true": S_true_rounded,
+            "ΔS": S_diff
+        })
+
+    df = pd.DataFrame(rows)
+    from IPython.display import HTML, display
+    display(HTML(df.to_html(index=False)))
+    return None
+
 
 def plot_all_P_preds_vs_true(P_preds, P_true):
     """
@@ -64,7 +97,7 @@ def plot_all_P_preds_vs_true(P_preds, P_true):
         "C₁₂₁₂", "C₁₃₁₃", "C₂₃₂₃"
     ]
     num_peaks = len(P_preds)
-    cols = 2
+    cols = 3
     rows = (num_peaks + cols - 1) // cols
     width = 0.35
     x = np.arange(len(labels))
@@ -109,6 +142,61 @@ def plot_all_P_preds_vs_true(P_preds, P_true):
     plt.show()
 
 
+def plot_all_P_preds_vs_true_with_fNN_uncertainty(P_preds, P_target_unnorm, S_true, fNN, P_std, P_mean):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import tensorflow as tf
+    from utils.data_utils.load_data import extract_target_properties
+
+    # === compute fNN(S_true) to serve as comparison ===
+    S_true_tensor = tf.convert_to_tensor(S_true.reshape(1, 1, -1), dtype=tf.float32)
+    C_pred = fNN(S_true_tensor).numpy().reshape(1, 3, 3, 3, 3)  # (1, 3, 3, 3, 3)
+    P_hat_from_S_true_norm = extract_target_properties(C_pred)[0]  # (9,)
+    P_hat_from_S_true = P_hat_from_S_true_norm * P_std + P_mean  # unnormalize
+
+    num_candidates = len(P_preds)
+    num_components = len(P_target_unnorm)
+    cols = 3
+    rows = (num_candidates + 1) // cols
+
+    component_labels = [r"$C_{111}$", r"$C_{112}$", r"$C_{113}$", r"$C_{222}$",
+                        r"$C_{223}$", r"$C_{333}$", r"$C_{211}$", r"$C_{313}$", r"$C_{323}$"]
+
+    fig, axes = plt.subplots(rows, cols, figsize=(12, rows * 3))
+    fig.suptitle("Predicted vs True Elastic Components per S Candidate\nwith fNN(S_true) Comparison", fontsize=16)
+
+    for i in range(num_candidates):
+        row, col = divmod(i, cols)
+        ax = axes[row, col] if rows > 1 else axes[col]
+
+        pred = P_preds[i]
+        true = P_target_unnorm
+        fNN_ref = P_hat_from_S_true
+
+        x = np.arange(num_components)
+        width = 0.25
+
+        ax.bar(x - width, true, width, label="True", color="red")
+        ax.bar(x, fNN_ref, width, label="Pred (fNN S_true)", color="lightgreen")
+        ax.bar(x + width, pred, width, label="Pred (CVAE Ŝ)", color="royalblue")
+
+        ax.set_title(f"Candidate {i + 1}")
+        ax.set_xticks(x)
+        ax.set_xticklabels(component_labels, rotation=45)
+        ax.set_ylim(0, 1.0)
+        ax.grid(True, linestyle="--", alpha=0.3)
+
+        if i == 0:
+            ax.legend()
+
+    # Hide unused subplots
+    for j in range(num_candidates, rows * cols):
+        fig.delaxes(axes.flatten()[j])
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
+
+
 def plot_per_component_bars(P_preds, P_true_norm, P_mean, P_std):
     """
     For each component of P, plot a grouped bar chart:
@@ -136,10 +224,10 @@ def plot_per_component_bars(P_preds, P_true_norm, P_mean, P_std):
         bar_positions = np.arange(len(values))
         bar_width = 0.8
 
-        # True bar
+        # true bar
         ax.bar(bar_positions[0], values[0], color='red', label='True')
 
-        # Predicted bars
+        # predicted bars
         for j in range(num_preds):
             ax.bar(bar_positions[j + 1], values[j + 1], color=colors(j), label=f'P {j+1}' if i == 0 else None)
 
@@ -149,7 +237,7 @@ def plot_per_component_bars(P_preds, P_true_norm, P_mean, P_std):
         ax.set_ylabel("Value")
         ax.grid(axis='y', linestyle='--', alpha=0.4)
 
-    # Legend outside the plot, only once
+    # legend outside the plot, only once
     handles, labels = axs[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(1.15, 0.96), frameon=False)
 
@@ -207,7 +295,7 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     return P_preds, errors, mses, df
 
 
-def evaluate_avg_mse_per_candidate(decoder, P_all, S_all, latent_dim, fNN, N=20, seed=42, device=None):
+def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=20, seed=42, device=None):
     from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
     from utils.data_utils.load_data import extract_target_properties
 
@@ -237,5 +325,10 @@ def evaluate_avg_mse_per_candidate(decoder, P_all, S_all, latent_dim, fNN, N=20,
         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
 
     overall_avg = round(np.mean([row["Avg MSE"] for row in rows]), 5)
-    print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}\n")
-    return pd.DataFrame(rows)
+    print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
+    
+    from IPython.display import HTML, display
+    df = pd.DataFrame(rows)
+    display(HTML(df.to_html(index=False)))
+
+    return df

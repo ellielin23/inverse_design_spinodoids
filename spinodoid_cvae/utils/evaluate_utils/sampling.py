@@ -66,3 +66,78 @@ def auto_select_bandwidth(S_hats, target_range=(5, 8), search_space=None):
             return bw, peaks
 
     return None, None
+
+
+
+def extract_peaks_with_bandwidth(S_hats, use_auto_bandwidth=False, manual_bw=4.0, target_range=(5, 8)):
+    """
+    Extract peaks from sampled S_hats using mean shift clustering.
+
+    Args:
+        S_hats (np.ndarray): Sampled structure vectors, shape (N, S_dim).
+        use_auto_bandwidth (bool): Whether to auto-select bandwidth.
+        manual_bw (float): Bandwidth to use if not auto-selecting.
+        target_range (tuple): Min/max number of peaks to target when auto-selecting bandwidth.
+
+    Returns:
+        S_hat_peaks (np.ndarray): Peak structure vectors.
+        bw_used (float): The bandwidth used.
+    """
+    import numpy as np
+    from .sampling import get_S_hat_peaks, auto_select_bandwidth
+
+    if use_auto_bandwidth:
+        selected_bw, S_hat_peaks = auto_select_bandwidth(S_hats, target_range=target_range)
+        bw_used = selected_bw or manual_bw  # fallback
+        if S_hat_peaks is not None:
+            print(f"\n✅ [Auto] Selected bandwidth: {bw_used:.2f} → Found {len(S_hat_peaks)} peak(s)")
+        else:
+            print("\n❌ [Auto] Could not find a bandwidth that yields desired number of peaks.")
+            S_hat_peaks = []
+    else:
+        S_hat_peaks = get_S_hat_peaks(S_hats, bandwidth=manual_bw)
+        bw_used = manual_bw
+        print(f"\n✅ [Manual] Used bandwidth: {bw_used:.2f} → Found {len(S_hat_peaks)} peak(s)")
+
+    return S_hat_peaks, bw_used
+
+
+def sort_peaks_by_empirical_probability(S_hats, S_hat_peaks, bw_used, verbose=True):
+    """
+    Sorts S_hat_peaks by empirical probability using MeanShift clustering.
+    
+    Args:
+        S_hats (np.ndarray): All sampled S vectors, shape (N, S_dim)
+        S_hat_peaks (np.ndarray): Initial peak estimates, shape (k, S_dim)
+        bw_used (float): Bandwidth used for clustering
+        verbose (bool): Whether to print info about peak frequencies
+    
+    Returns:
+        sorted_centers (np.ndarray): Peaks sorted by descending empirical frequency
+        sorted_probs (np.ndarray): Corresponding probabilities for each peak
+        sorted_counts (np.ndarray): Number of points in each cluster
+    """
+    import numpy as np
+    from sklearn.cluster import MeanShift
+    
+    if S_hat_peaks is None:
+        return None, None, None
+
+    ms = MeanShift(bandwidth=bw_used)
+    cluster_labels = ms.fit_predict(S_hats)
+    unique, counts = np.unique(cluster_labels, return_counts=True)
+    total = len(S_hats)
+    empirical_probs = counts / total
+
+    sorted_indices = np.argsort(-empirical_probs)
+    sorted_probs = empirical_probs[sorted_indices]
+    sorted_counts = counts[sorted_indices]
+    sorted_centers = ms.cluster_centers_[sorted_indices]
+
+    if verbose:
+        print("\n✅ Sorted empirical probabilities for each peak:")
+        for i, (count, prob, center) in enumerate(zip(sorted_counts, sorted_probs, sorted_centers)):
+            center_str = np.array2string(center, precision=3, separator=', ')
+            print(f"  Peak {i}: {count} samples ({prob:.3f})")
+
+    return sorted_centers, sorted_probs, sorted_counts

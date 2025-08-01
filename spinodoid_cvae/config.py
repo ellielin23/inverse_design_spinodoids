@@ -1,11 +1,11 @@
 # config.py
 
 # === flow type ===
-USE_ATTENTION_ENCODER = True
+USE_ATTENTION_ENCODER = False
 USE_ATTENTION_DECODER = True
 USE_FLOW_DECODER = True
 FLOW_TYPE = "realnvp"
-TRIAL = 8
+TRIAL = 10
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
@@ -21,7 +21,7 @@ NUM_FLOWS = 6
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
 NUM_EPOCHS = 100
-BETA = 10.0            # KL divergence weighting
+BETA = 1.0            # KL divergence weighting
 DROPOUT_PROB = 0.5
 
 # === data ===
