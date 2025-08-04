@@ -332,3 +332,52 @@ def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=2
     display(HTML(df.to_html(index=False)))
 
     return df
+
+
+def evaluate_peaks_optimized(S_hat_peaks, P_target, fNN, P_mean, P_std):
+    """
+    Optimized version of evaluate_peaks with vectorized operations and reduced overhead.
+    Returns:
+        - P_preds: ndarray of predicted P vectors (unnormalized) 
+        - errors: ndarray of L2 errors (unnormalized)
+        - mses: ndarray of MSEs (unnormalized) 
+        - df: pd.DataFrame with all of the above
+    """
+    from utils.data_utils.load_data import extract_target_properties
+    
+    # Move imports to top to avoid repeated imports
+    # Vectorize preprocessing
+    S_peaks_batch = np.expand_dims(S_hat_peaks, axis=1)  # shape: (n_peaks, 1, 4)
+    
+    # Batch forward pass through neural network
+    C_preds = fNN(S_peaks_batch).numpy().reshape(-1, 3, 3, 3, 3)  # (n_peaks, 3, 3, 3, 3)
+    
+    # Vectorized property extraction
+    P_preds_norm = np.array([extract_target_properties(C_pred.reshape(1, 3, 3, 3, 3))[0] 
+                            for C_pred in C_preds])  # (n_peaks, 9)
+    
+    # Vectorized unnormalization
+    P_target_unnorm = P_target * P_std + P_mean
+    P_preds = P_preds_norm * P_std + P_mean  # (n_peaks, 9)
+    
+    # Vectorized error calculations
+    diffs = P_preds - P_target_unnorm  # (n_peaks, 9)
+    errors = np.linalg.norm(diffs, axis=1)  # (n_peaks,)
+    mses = np.mean(diffs**2, axis=1)  # (n_peaks,)
+    
+    # Create DataFrame efficiently
+    df_data = {
+        "Peak": np.arange(len(S_hat_peaks)),
+        "||P-hat - P||": np.round(errors, 4),
+        "MSE": np.round(mses, 5)
+    }
+    df = pd.DataFrame(df_data)
+    
+    # Display results
+    overall_avg = np.round(np.mean(mses), 5)
+    print(f"\n✅ Mean MSE across all peaks (unnormalized): {overall_avg:.5f}\n")
+    
+    from IPython.display import HTML, display
+    display(HTML(df.to_html(index=False)))
+    
+    return P_preds, errors, mses, df
