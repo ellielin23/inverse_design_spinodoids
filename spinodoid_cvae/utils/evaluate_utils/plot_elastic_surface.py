@@ -189,7 +189,8 @@ def plot_elastic_surface(C, save_as=None):
     EN3 = np.reshape(surface_points[:,2], [shapes[0], shapes[1]])
     E = E.reshape(EN1.shape)
 
-    norm = mpl.colors.Normalize(vmin=np.min(E), vmax=np.max(E))
+    # norm = mpl.colors.Normalize(vmin=np.min(E), vmax=np.max(E))
+    norm = mpl.colors.Normalize(vmin=0.0, vmax=0.5)
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(projection='3d')
     # cm = plt.cm.get_cmap(cmap)
