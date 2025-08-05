@@ -2,10 +2,10 @@
 
 # === flow type ===
 USE_ATTENTION_ENCODER = False
-USE_ATTENTION_DECODER = True
-USE_FLOW_DECODER = True
+USE_ATTENTION_DECODER = False
+USE_FLOW_DECODER = False
 FLOW_TYPE = "realnvp"
-TRIAL = 10
+TRIAL = 24
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
@@ -14,18 +14,18 @@ LATENT_DIM = 4        # latent space dimension (can tune later)
 
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder
-DECODER_HIDDEN_DIMS = [256, 128, 64, 32, 16] # hidden dimensions for decoder
+DECODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for decoder
 NUM_FLOWS = 6
 
 # === training hyperparameters ===
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
 NUM_EPOCHS = 100
-BETA = 1.0            # KL divergence weighting
+BETA = 0.1            # KL divergence weighting
 DROPOUT_PROB = 0.5
 
 # === data ===
-DATA_PATH = "data/large_dataset.csv"
+DATA_PATH = "data/train/large_dataset.csv"
 
 # === checkpoint paths ===
 if USE_FLOW_DECODER:

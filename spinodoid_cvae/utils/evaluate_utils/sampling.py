@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from sklearn.cluster import MeanShift
 
-def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, seed=None, device='cpu'):
+def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, seed=42, device='cpu'):
     """
     Samples structure vectors S_hat from the decoder given a property vector P_val.
     Works with both Decoder and FlowDecoder.
@@ -28,7 +28,7 @@ def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, seed=None, device='
     return S_hats.cpu().numpy() if not isinstance(S_hats, tuple) else S_hats[0].cpu().numpy()
 
 
-def get_S_hat_peaks(S_hats, bandwidth=5.0):
+def get_S_hat_peaks(S_hats, bandwidth):
     """
     Applies MeanShift clustering to extract representative peak candidates from sampled S_hat vectors.
 
@@ -100,6 +100,38 @@ def extract_peaks_with_bandwidth(S_hats, use_auto_bandwidth=False, manual_bw=4.0
         print(f"\n✅ [Manual] Used bandwidth: {bw_used:.2f} → Found {len(S_hat_peaks)} peak(s)")
 
     return S_hat_peaks, bw_used
+
+
+
+def extract_peaks_with_bandwidth_no_print(S_hats, use_auto_bandwidth=False, manual_bw=4.0, target_range=(5, 8)):
+    """
+    Extract peaks from sampled S_hats using mean shift clustering.
+
+    Args:
+        S_hats (np.ndarray): Sampled structure vectors, shape (N, S_dim).
+        use_auto_bandwidth (bool): Whether to auto-select bandwidth.
+        manual_bw (float): Bandwidth to use if not auto-selecting.
+        target_range (tuple): Min/max number of peaks to target when auto-selecting bandwidth.
+
+    Returns:
+        S_hat_peaks (np.ndarray): Peak structure vectors.
+        bw_used (float): The bandwidth used.
+    """
+    import numpy as np
+    from .sampling import get_S_hat_peaks, auto_select_bandwidth
+
+    if use_auto_bandwidth:
+        selected_bw, S_hat_peaks = auto_select_bandwidth(S_hats, target_range=target_range)
+        bw_used = selected_bw or manual_bw  # fallback
+        if S_hat_peaks is None:
+            print("\n❌ [Auto] Could not find a bandwidth that yields desired number of peaks.")
+            S_hat_peaks = []
+    else:
+        S_hat_peaks = get_S_hat_peaks(S_hats, bandwidth=manual_bw)
+        bw_used = manual_bw
+
+    return S_hat_peaks, bw_used
+
 
 
 def sort_peaks_by_empirical_probability(S_hats, S_hat_peaks, bw_used, verbose=True):

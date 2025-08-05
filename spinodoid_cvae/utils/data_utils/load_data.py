@@ -126,7 +126,7 @@ def load_dataset(path_csv):
         S ∈ ℝ⁴ (torch.Tensor): shape (N, 4) — structure parameters
     """
     data = np.genfromtxt(path_csv, delimiter=',')[:, 1:]  # skip ID column
-    S = np.concatenate([data[:, 1:4], data[:, 0:1]], axis=-1)  # S: [2:5] + [1]
+    S = np.concatenate([data[:, 1:4], data[:, 0:1]], axis=-1)
     C_flat_21 = data[:, 4:]
 
     C_tensor = full_C_from_C_flat_21(C_flat_21)

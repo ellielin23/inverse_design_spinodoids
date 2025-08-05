@@ -283,7 +283,7 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
         rows.append({
             "Peak": i,
             "||P-hat - P||": round(l2_error, 4),
-            "MSE": round(mse, 5)
+            "MSE": mse
         })
 
     overall_avg = round(np.mean(mses), 5)
@@ -294,23 +294,87 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     display(HTML(df.to_html(index=False)))
     return P_preds, errors, mses, df
 
+# # === DID NOT INCORPORATE FILTERING ===#
+# def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=20, seed=42, device=None):
+#     from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
+#     from utils.data_utils.load_data import extract_target_properties
 
-def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=20, seed=42, device=None):
+#     P_mean = np.load("data/P_mean.npy")
+#     P_std = np.load("data/P_std.npy")
+
+#     rows = []
+
+#     for i in range(N):
+#         P_target = P_all[i].unsqueeze(0).to(device)
+#         P_target_np = P_target.cpu().numpy().flatten()
+#         P_target_unnorm = P_target_np * P_std + P_mean
+
+#         S_hats = get_S_hats(decoder, P_target, latent_dim, num_samples=1000, seed=seed+i, device=device)
+#         S_hat_peaks = get_S_hat_peaks(S_hats, bandwidth=4.0)
+
+#         mses = []
+#         for S_peak in S_hat_peaks:
+#             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
+#             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
+#             P_pred_norm = extract_target_properties(C_pred)[0]
+#             P_pred = P_pred_norm * P_std + P_mean
+#             mse = np.mean((P_pred - P_target_unnorm) ** 2)
+#             mses.append(mse)
+
+#         avg_mse = np.mean(mses)
+#         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
+
+#     overall_avg = round(np.mean([row["Avg MSE"] for row in rows]), 5)
+#     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
+    
+#     from IPython.display import HTML, display
+#     df = pd.DataFrame(rows)
+#     display(HTML(df.to_html(index=False)))
+
+#     return df
+
+
+def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
+                                     P_mean_path, P_std_path, bw,
+                                     N=20, seed=42, device=None):
+    import numpy as np
+    import pandas as pd
+    import torch
+    from IPython.display import HTML, display
     from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
     from utils.data_utils.load_data import extract_target_properties
+    from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
 
-    P_mean = np.load("data/P_mean.npy")
-    P_std = np.load("data/P_std.npy")
+    # load normalization constants
+    P_mean = np.load(P_mean_path)
+    P_std = np.load(P_std_path)
 
     rows = []
 
     for i in range(N):
+        # fet target P vector
         P_target = P_all[i].unsqueeze(0).to(device)
         P_target_np = P_target.cpu().numpy().flatten()
         P_target_unnorm = P_target_np * P_std + P_mean
 
+        # sample S candidates and extract peaks using same method as notebook
         S_hats = get_S_hats(decoder, P_target, latent_dim, num_samples=1000, seed=seed+i, device=device)
-        S_hat_peaks = get_S_hat_peaks(S_hats, bandwidth=4.0)
+        from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_peaks_by_empirical_probability
+        
+        # use extract_peaks_with_bandwidth to match notebook approach
+        S_hat_peaks, _ = extract_peaks_with_bandwidth_no_print(
+            S_hats, 
+            use_auto_bandwidth=False, 
+            manual_bw=bw, 
+            target_range=(5, 8)
+        )
+        
+        # sort peaks by empirical probability to match notebook
+        S_hat_peaks, _, _ = sort_peaks_by_empirical_probability(S_hats, S_hat_peaks, bw, verbose=False)
+
+        # apply constraints
+        S_hat_peaks = enforce_theta_domain(S_hat_peaks)
+        S_hat_peaks = filter_S_candidates(S_hat_peaks)
 
         mses = []
         for S_peak in S_hat_peaks:
@@ -321,63 +385,14 @@ def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=2
             mse = np.mean((P_pred - P_target_unnorm) ** 2)
             mses.append(mse)
 
-        avg_mse = np.mean(mses)
+        avg_mse = np.mean(mses) if mses else np.nan
         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
 
-    overall_avg = round(np.mean([row["Avg MSE"] for row in rows]), 5)
+    overall_avg = round(np.nanmean([row["Avg MSE"] for row in rows]), 5)
     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
-    
-    from IPython.display import HTML, display
+
     df = pd.DataFrame(rows)
     display(HTML(df.to_html(index=False)))
-
     return df
 
 
-def evaluate_peaks_optimized(S_hat_peaks, P_target, fNN, P_mean, P_std):
-    """
-    Optimized version of evaluate_peaks with vectorized operations and reduced overhead.
-    Returns:
-        - P_preds: ndarray of predicted P vectors (unnormalized) 
-        - errors: ndarray of L2 errors (unnormalized)
-        - mses: ndarray of MSEs (unnormalized) 
-        - df: pd.DataFrame with all of the above
-    """
-    from utils.data_utils.load_data import extract_target_properties
-    
-    # Move imports to top to avoid repeated imports
-    # Vectorize preprocessing
-    S_peaks_batch = np.expand_dims(S_hat_peaks, axis=1)  # shape: (n_peaks, 1, 4)
-    
-    # Batch forward pass through neural network
-    C_preds = fNN(S_peaks_batch).numpy().reshape(-1, 3, 3, 3, 3)  # (n_peaks, 3, 3, 3, 3)
-    
-    # Vectorized property extraction
-    P_preds_norm = np.array([extract_target_properties(C_pred.reshape(1, 3, 3, 3, 3))[0] 
-                            for C_pred in C_preds])  # (n_peaks, 9)
-    
-    # Vectorized unnormalization
-    P_target_unnorm = P_target * P_std + P_mean
-    P_preds = P_preds_norm * P_std + P_mean  # (n_peaks, 9)
-    
-    # Vectorized error calculations
-    diffs = P_preds - P_target_unnorm  # (n_peaks, 9)
-    errors = np.linalg.norm(diffs, axis=1)  # (n_peaks,)
-    mses = np.mean(diffs**2, axis=1)  # (n_peaks,)
-    
-    # Create DataFrame efficiently
-    df_data = {
-        "Peak": np.arange(len(S_hat_peaks)),
-        "||P-hat - P||": np.round(errors, 4),
-        "MSE": np.round(mses, 5)
-    }
-    df = pd.DataFrame(df_data)
-    
-    # Display results
-    overall_avg = np.round(np.mean(mses), 5)
-    print(f"\n✅ Mean MSE across all peaks (unnormalized): {overall_avg:.5f}\n")
-    
-    from IPython.display import HTML, display
-    display(HTML(df.to_html(index=False)))
-    
-    return P_preds, errors, mses, df
