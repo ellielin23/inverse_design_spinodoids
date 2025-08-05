@@ -147,6 +147,9 @@ plt.show()
 
 with open(CONFIG_SAVE_PATH, "w") as f:
     for k, v in config_dict.items():
-        f.write(f"{k}: {v}\n")
+        if isinstance(v, str):
+            f.write(f'{k}: "{v}"\n')  # wrap strings in quotes!!
+        else:
+            f.write(f"{k}: {v}\n")
 
 print("✅ Model and config saved to", CHECKPOINT_DIR_PATH)
