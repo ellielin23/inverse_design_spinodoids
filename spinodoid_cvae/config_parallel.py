@@ -1,13 +1,13 @@
 # config_parallel.py
 
 # === set theta and trial ===
-THETA_PATTERN = "011"   # change to "100", "010", "001", etc. as needed
-TRIAL = 1
+THETA_PATTERN = "100"   # change to "100", "010", "001", etc. as needed
+TRIAL = 2
 
 # === set attention and flow ===
-USE_ATTENTION_ENCODER = False
-USE_ATTENTION_DECODER = False
-USE_FLOW_DECODER = False
+USE_ATTENTION_ENCODER = True
+USE_ATTENTION_DECODER = True
+USE_FLOW_DECODER = True
 FLOW_TYPE = "realnvp"
 
 # === model dimensions ===

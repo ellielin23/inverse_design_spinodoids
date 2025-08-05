@@ -116,14 +116,15 @@ def extract_target_properties(C_tensor):
 
 def load_dataset(path_csv):
     """
-    Loads a spinodoid dataset CSV, extracts structure parameters and elastic properties.
+    Loads a spinodoid dataset CSV, extracts structure parameters, elastic properties, and full C tensors.
 
     Args:
         path_csv (str): Path to CSV with 25 columns (ID, S1-S4, C_flat_21)
 
     Returns:
-        P ∈ ℝ⁹ (torch.Tensor): shape (N, 9) — 9 target elastic components
-        S ∈ ℝ⁴ (torch.Tensor): shape (N, 4) — structure parameters
+        P ∈ ℝ⁹ (torch.Tensor): shape (N, 9)
+        S ∈ ℝ⁴ (torch.Tensor): shape (N, 4)
+        C_tensor ∈ ℝ^{N×3×3×3×3} (np.ndarray): full fourth-order tensors
     """
     data = np.genfromtxt(path_csv, delimiter=',')[:, 1:]  # skip ID column
     S = np.concatenate([data[:, 1:4], data[:, 0:1]], axis=-1)
@@ -135,4 +136,5 @@ def load_dataset(path_csv):
     # convert to pytorch tensors
     S = torch.tensor(S, dtype=torch.float32)
     P = torch.tensor(P, dtype=torch.float32)
-    return P, S
+    return P, S, C_tensor
+

@@ -246,20 +246,20 @@ def plot_per_component_bars(P_preds, P_true_norm, P_mean, P_std):
     plt.show()
 
 
-
 def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     """
-    Evaluates each peak Ŝ using Max's fNN and returns a clean pandas DataFrame.
-    Returns:
+    Evaluates each peak Ŝ using Max's fNN and returns:
         - P_preds: list of predicted P vectors (unnormalized)
         - errors: list of L2 errors (unnormalized)
         - mses: list of MSEs (unnormalized)
-        - df: pd.DataFrame with all of the above
+        - df: pd.DataFrame with error metrics
+        - C_preds: list of 3x3x3x3 elasticity tensors
     """
     from utils.data_utils.load_data import extract_target_properties
     P_preds = []
     errors = []
     mses = []
+    C_preds = []
 
     # unnormalize ground truth
     P_target_unnorm = P_target * P_std + P_mean
@@ -269,9 +269,9 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     for i, S_peak in enumerate(S_hat_peaks):
         S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
         C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-        P_pred_norm = extract_target_properties(C_pred)[0]
+        C_preds.append(C_pred[0])  # just the (3,3,3,3) part
 
-        # unnormalize prediction
+        P_pred_norm = extract_target_properties(C_pred)[0]
         P_pred = P_pred_norm * P_std + P_mean
         P_preds.append(P_pred)
 
@@ -292,46 +292,8 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     df = pd.DataFrame(rows)
     from IPython.display import HTML, display
     display(HTML(df.to_html(index=False)))
-    return P_preds, errors, mses, df
 
-# # === DID NOT INCORPORATE FILTERING ===#
-# def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN, N=20, seed=42, device=None):
-#     from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
-#     from utils.data_utils.load_data import extract_target_properties
-
-#     P_mean = np.load("data/P_mean.npy")
-#     P_std = np.load("data/P_std.npy")
-
-#     rows = []
-
-#     for i in range(N):
-#         P_target = P_all[i].unsqueeze(0).to(device)
-#         P_target_np = P_target.cpu().numpy().flatten()
-#         P_target_unnorm = P_target_np * P_std + P_mean
-
-#         S_hats = get_S_hats(decoder, P_target, latent_dim, num_samples=1000, seed=seed+i, device=device)
-#         S_hat_peaks = get_S_hat_peaks(S_hats, bandwidth=4.0)
-
-#         mses = []
-#         for S_peak in S_hat_peaks:
-#             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
-#             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-#             P_pred_norm = extract_target_properties(C_pred)[0]
-#             P_pred = P_pred_norm * P_std + P_mean
-#             mse = np.mean((P_pred - P_target_unnorm) ** 2)
-#             mses.append(mse)
-
-#         avg_mse = np.mean(mses)
-#         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
-
-#     overall_avg = round(np.mean([row["Avg MSE"] for row in rows]), 5)
-#     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
-    
-#     from IPython.display import HTML, display
-#     df = pd.DataFrame(rows)
-#     display(HTML(df.to_html(index=False)))
-
-#     return df
+    return P_preds, errors, mses, df, C_preds
 
 
 def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
@@ -394,5 +356,54 @@ def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
     df = pd.DataFrame(rows)
     display(HTML(df.to_html(index=False)))
     return df
+
+
+
+def plot_pred_vs_true_scatter(P_true_unnorm, P_preds, component_labels=None, trial=None):
+    """
+    Plots a scatter plot of predicted vs true elastic components across all Ŝ candidates.
+
+    Args:
+        P_true_unnorm (np.ndarray): True P vector, shape (9,)
+        P_preds (np.ndarray): Predicted P vectors from each Ŝ candidate, shape (num_candidates, 9)
+        component_labels (list of str): Labels for each component (e.g. ["C111", "C112", ...])
+        trial (int or str): Optional trial number to include in title
+    """
+    if component_labels is None:
+        component_labels = [r"$C_{1111}$", r"$C_{1122}$", r"$C_{1133}$",
+                            r"$C_{2222}$", r"$C_{2233}$", r"$C_{3333}$",
+                            r"$C_{1212}$", r"$C_{1313}$", r"$C_{2323}$"]
+
+    P_true_unnorm = np.array(P_true_unnorm).flatten()
+    P_preds = np.array(P_preds)
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+
+    all_vals = np.concatenate([P_true_unnorm, P_preds.flatten()])
+    min_val, max_val = all_vals.min(), all_vals.max()
+    buffer = (max_val - min_val) * 0.05  # add margin
+
+    for i in range(P_preds.shape[1]):
+        x_vals = [P_true_unnorm[i]] * len(P_preds)
+        y_vals = P_preds[:, i]
+        ax.scatter(x_vals, y_vals, label=component_labels[i], alpha=0.7)
+
+    # Diagonal line
+    ax.plot([min_val - buffer, max_val + buffer], [min_val - buffer, max_val + buffer],
+            'k--', linewidth=1)
+
+    ax.set_xlim(min_val - buffer, max_val + buffer)
+    ax.set_ylim(min_val - buffer, max_val + buffer)
+    ax.set_aspect('equal', adjustable='box')
+
+    ax.set_xlabel("True Component Value")
+    ax.set_ylabel("Predicted Component Value")
+    ax.set_title(f"Predicted vs True Elastic Components" + (f" (Trial {trial})" if trial else ""))
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+    ax.grid(True, linestyle='--', alpha=0.4)
+
+    plt.tight_layout()
+    plt.show()
+
 
 
