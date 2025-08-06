@@ -20,7 +20,7 @@ NUM_FLOWS = 6
 # === training hyperparameters ===
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 BETA = 0.1            # KL divergence weighting
 DROPOUT_PROB = 0.5
 

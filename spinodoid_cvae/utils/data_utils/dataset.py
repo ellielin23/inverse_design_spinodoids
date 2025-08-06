@@ -15,7 +15,7 @@ class SpinodoidDataset(Dataset):
     
     def __init__(self, path_csv):
         # load full dataset using my preprocessing function
-        self.P, self.S = load_dataset(path_csv)
+        self.P, self.S, _ = load_dataset(path_csv)
 
     def __len__(self):
         # return total number of samples

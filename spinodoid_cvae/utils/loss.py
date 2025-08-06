@@ -4,11 +4,22 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-def reconstruction_loss(S_hat, S):
+def reconstruction_loss(S_hat, S, component_weights=None):
     """
-    Mean squared error loss between predicted and true structure parameters.
+    Optionally weighted MSE loss between predicted and true structure parameters.
+
+    Args:
+        S_hat: (batch, 4)
+        S: (batch, 4)
+        component_weights: Optional list/array of length 4
     """
-    return F.mse_loss(S_hat, S, reduction='mean')
+    if component_weights is not None:
+        weights = torch.tensor(component_weights, dtype=torch.float32, device=S_hat.device)
+        loss = ((weights * (S_hat - S) ** 2).sum(dim=1).mean())
+    else:
+        loss = F.mse_loss(S_hat, S, reduction='mean')
+    return loss
+
 
 from utils.data_utils.load_data import extract_target_properties
 
@@ -42,7 +53,7 @@ def kl_divergence(mu, logvar):
     """
     return -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
-def get_kl_beta(epoch, warmup_epochs=20, max_beta=1.0):
+def get_kl_beta(epoch, warmup_epochs=50, max_beta=1.0):
     """
     Linearly increases beta from 0 to max_beta over warmup_epochs.
     After that, keeps it at max_beta.
@@ -50,7 +61,7 @@ def get_kl_beta(epoch, warmup_epochs=20, max_beta=1.0):
     return min(max_beta, (epoch + 1) / warmup_epochs * max_beta)
 
 
-def total_loss(S_hat, S, mu, logvar, log_det=None, beta=1.0):
+def total_loss(S_hat, S, mu, logvar, log_det=None, beta=1.0, component_weights=None):
     """
     Total CVAE loss, optionally flow-aware:
       - With flow: KL = base_KL - log_det_Jacobian
@@ -64,6 +75,8 @@ def total_loss(S_hat, S, mu, logvar, log_det=None, beta=1.0):
         log_det (Tensor or None): log-det-Jacobian from flow (optional)
         beta (float): KL divergence weight
     """
-    rec = reconstruction_loss(S_hat, S)
+    rec = reconstruction_loss(S_hat, S, component_weights)
     kl = kl_divergence(mu, logvar)
+    if log_det is not None:
+        kl -= torch.mean(log_det)
     return rec + beta * kl, rec, kl

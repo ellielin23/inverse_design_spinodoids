@@ -1,19 +1,19 @@
 # config_parallel.py
 
 # === set theta and trial ===
-THETA_PATTERN = "100"   # change to "100", "010", "001", etc. as needed
-TRIAL = 2
+THETA_PATTERN = "001"   # change to "100", "010", "001", etc. as needed
+TRIAL = 9
 
 # === set attention and flow ===
 USE_ATTENTION_ENCODER = True
 USE_ATTENTION_DECODER = True
-USE_FLOW_DECODER = True
+USE_FLOW_DECODER = False
 FLOW_TYPE = "realnvp"
 
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
 P_DIM = 9              # target property dimension
-LATENT_DIM = 4        # latent space dimension (can tune later)
+LATENT_DIM = 2        # latent space dimension (can tune later)
 
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder
@@ -24,8 +24,8 @@ NUM_FLOWS = 6
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
 NUM_EPOCHS = 100
-BETA = 0.1           # KL divergence weighting
-DROPOUT_PROB = 0.5
+BETA = 0.01           # KL divergence weighting
+DROPOUT_PROB = 0.0
 
 # === data ===
 DATA_PATH = f"data/partition_by_theta/theta_{THETA_PATTERN}.csv"

@@ -66,6 +66,7 @@ def reparameterize(mu, logvar):
 
 # === training loop ===
 losses, recon_losses, kl_losses = [], [], []
+RECON_WEIGHTS = [1.0, 1.0, 1.0, 1000.0]  # boost volume ratio weight (index 3)
 
 for epoch in range(NUM_EPOCHS):
     encoder.train()
@@ -84,14 +85,18 @@ for epoch in range(NUM_EPOCHS):
         # forward pass
         mu, logvar = encoder(S_batch, P_norm)
         z = reparameterize(mu, logvar)
-        beta = get_kl_beta(epoch, warmup_epochs=20, max_beta=BETA)
+        beta = get_kl_beta(epoch, warmup_epochs=50, max_beta=BETA)
 
-        if USE_FLOW_DECODER:
-            S_hat, log_det = decoder(z, P_norm)
-            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, log_det=log_det, beta=beta)
-        else:
-            S_hat = decoder(z, P_norm)
-            loss, rec, kl = total_loss(S_hat, S_batch, mu, logvar, beta=beta)
+        S_hat, log_det = (
+            decoder(z, P_norm) if USE_FLOW_DECODER else (decoder(z, P_norm), None)
+        )
+
+        loss, rec, kl = total_loss(
+            S_hat, S_batch, mu, logvar,
+            log_det=log_det,
+            beta=beta,
+            component_weights=RECON_WEIGHTS
+        )
 
         loss.backward()
         optimizer.step()
@@ -101,7 +106,7 @@ for epoch in range(NUM_EPOCHS):
         total_kl_loss += kl.item()
 
     scheduler.step()
-    print(f"Epoch {epoch+1:03d} | LR: {scheduler.get_last_lr()[0]:.5e} | Loss: {total_loss_epoch:.4f} | Rec: {total_rec_loss:.4f} | KL: {total_kl_loss:.4f}")
+    print(f"Epoch {epoch+1:03d} | LR: {scheduler.get_last_lr()[0]:.5e} | Loss: {total_loss_epoch:.4f} | Rec: {total_rec_loss:.4f} | KL: {total_kl_loss:.4f} | Beta: {beta:.3f}")
     losses.append(total_loss_epoch)
     recon_losses.append(total_rec_loss)
     kl_losses.append(total_kl_loss)
