@@ -1,8 +1,8 @@
 # config_parallel.py
 
 # === set theta and trial ===
-THETA_PATTERN = "001"   # change to "100", "010", "001", etc. as needed
-TRIAL = 10
+THETA_PATTERN = "111"   # change to "100", "010", "001", etc. as needed
+TRIAL = 2
 
 # === set attention and flow ===
 USE_ATTENTION_ENCODER = True

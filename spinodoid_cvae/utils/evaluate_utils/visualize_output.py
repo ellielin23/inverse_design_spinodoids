@@ -300,58 +300,127 @@ def evaluate_peaks(S_hat_peaks_unnorm, P_true_unnorm, fNN):
     return P_preds, errors, mses, df, C_preds
 
 
+# def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
+#                                      P_mean_path, P_std_path, S_mean_path, S_std_path, 
+#                                      bw, N=20, seed=42, device=None):
+
+#     # load normalization constants
+#     P_mean = np.load(P_mean_path)
+#     P_std = np.load(P_std_path)
+#     S_mean = np.load(S_mean_path)
+#     S_std  = np.load(S_std_path)
+
+#     # prevent division by zero
+#     epsilon = 1e-8
+#     S_std = np.where(S_std < epsilon, 1.0, S_std)
+
+#     rows = []
+
+#     for i in range(N):
+#         # get target P vector
+#         P_true = P_all[i].unsqueeze(0).to(device)
+#         P_true = P_true.cpu().numpy().flatten()
+#         P_true_norm = (P_true - P_mean) / (P_std + 1e-8)  # normalize for decoder
+#         P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)  # shape: (1, 9)
+
+#         # sample S candidates and extract peaks using same method as notebook
+#         S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed+i, device=device)
+
+#         # use extract_peaks_with_bandwidth to match notebook approach
+#         S_hat_peaks_norm, _ = extract_peaks_with_bandwidth_no_print(
+#             S_hats_norm, 
+#             use_auto_bandwidth=False, 
+#             manual_bw=bw, 
+#             target_range=(5, 8)
+#         )
+        
+#         # sort peaks by empirical probability to match notebook
+#         S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
+#         S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
+
+#         # apply constraints
+#         S_hat_peaks_unnorm = enforce_theta_domain(S_hat_peaks_unnorm)
+#         S_hat_peaks_unnorm = filter_S_candidates(S_hat_peaks_unnorm)
+
+#         mses = []
+#         for S_peak in S_hat_peaks_unnorm:
+#             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
+#             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
+#             P_pred = extract_target_properties(C_pred)[0]
+#             mse = np.mean((P_pred - P_true) ** 2)
+#             mses.append(mse)
+
+#         avg_mse = np.mean(mses) if mses else np.nan
+#         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
+
+#     overall_avg = round(np.nanmean([row["Avg MSE"] for row in rows]), 5)
+#     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
+
+#     df = pd.DataFrame(rows)
+#     display(HTML(df.to_html(index=False)))
+#     return df
+
+
 def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
                                      P_mean_path, P_std_path, S_mean_path, S_std_path, 
                                      bw, N=20, seed=42, device=None):
 
-    # load normalization constants
+    # === load normalization constants ===
     P_mean = np.load(P_mean_path)
     P_std = np.load(P_std_path)
     S_mean = np.load(S_mean_path)
     S_std  = np.load(S_std_path)
 
-    # prevent division by zero
     epsilon = 1e-8
     S_std = np.where(S_std < epsilon, 1.0, S_std)
 
     rows = []
 
     for i in range(N):
-        # get target P vector
-        P_true = P_all[i].unsqueeze(0).to(device)
-        P_true = P_true.cpu().numpy().flatten()
-        P_true_norm = (P_true - P_mean) / (P_std + 1e-8)  # normalize for decoder
-        P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)  # shape: (1, 9)
+        # === get true P and S vectors ===
+        P_true = P_all[i].unsqueeze(0).to(device).cpu().numpy().flatten()
+        S_true = S_all[i].cpu().numpy().flatten()
 
-        # sample S candidates and extract peaks using same method as notebook
+        # === normalize P for decoder ===
+        P_true_norm = (P_true - P_mean) / (P_std + epsilon)
+        P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)
+
+        # === generate and process S-hats ===
         S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed+i, device=device)
 
-        # use extract_peaks_with_bandwidth to match notebook approach
         S_hat_peaks_norm, _ = extract_peaks_with_bandwidth_no_print(
-            S_hats_norm, 
-            use_auto_bandwidth=False, 
-            manual_bw=bw, 
-            target_range=(5, 8)
+            S_hats_norm, use_auto_bandwidth=False, manual_bw=bw, target_range=(5, 8)
         )
-        
-        # sort peaks by empirical probability to match notebook
-        S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
-        S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
 
-        # apply constraints
+        S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(
+            S_hats_norm, S_hat_peaks_norm, bw, verbose=False
+        )
+
+        S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
         S_hat_peaks_unnorm = enforce_theta_domain(S_hat_peaks_unnorm)
         S_hat_peaks_unnorm = filter_S_candidates(S_hat_peaks_unnorm)
 
+        # === forward model + MSE ===
         mses = []
         for S_peak in S_hat_peaks_unnorm:
-            S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
+            S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # (1, 1, 4)
             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
             P_pred = extract_target_properties(C_pred)[0]
             mse = np.mean((P_pred - P_true) ** 2)
             mses.append(mse)
 
         avg_mse = np.mean(mses) if mses else np.nan
-        rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
+
+        print(f"\n[{i:02d}] ✅ Avg MSE: {avg_mse:.5f}")
+        print(f"     S_true: {np.round(S_true, 4)}")
+        print(f"     P_true: {np.round(P_true, 4)}")
+
+        rows.append({
+            "(Sᵢ, Pᵢ) index": i,
+            "Avg MSE": round(avg_mse, 5),
+            "S_true": np.round(S_true, 4),
+            "P_true": np.round(P_true, 4)
+        })
 
     overall_avg = round(np.nanmean([row["Avg MSE"] for row in rows]), 5)
     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
@@ -359,6 +428,7 @@ def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
     df = pd.DataFrame(rows)
     display(HTML(df.to_html(index=False)))
     return df
+
 
 
 
