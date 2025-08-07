@@ -9,6 +9,15 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
+import numpy as np
+import pandas as pd
+import torch
+from IPython.display import HTML, display
+from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
+from utils.data_utils.load_data import extract_target_properties
+from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
+from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_peaks_by_empirical_probability
+
 
 def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
     """
@@ -246,12 +255,12 @@ def plot_per_component_bars(P_preds, P_true_norm, P_mean, P_std):
     plt.show()
 
 
-def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
+def evaluate_peaks(S_hat_peaks_unnorm, P_true_unnorm, fNN):
     """
     Evaluates each peak Ŝ using Max's fNN and returns:
         - P_preds: list of predicted P vectors (unnormalized)
-        - errors: list of L2 errors (unnormalized)
-        - mses: list of MSEs (unnormalized)
+        - errors: list of L2 errors
+        - mses: list of MSEs
         - df: pd.DataFrame with error metrics
         - C_preds: list of 3x3x3x3 elasticity tensors
     """
@@ -260,23 +269,18 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
     errors = []
     mses = []
     C_preds = []
-
-    # unnormalize ground truth
-    P_target_unnorm = P_target * P_std + P_mean
-
     rows = []
 
-    for i, S_peak in enumerate(S_hat_peaks):
+    for i, S_peak in enumerate(S_hat_peaks_unnorm):
         S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
         C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
         C_preds.append(C_pred[0])  # just the (3,3,3,3) part
 
-        P_pred_norm = extract_target_properties(C_pred)[0]
-        P_pred = P_pred_norm * P_std + P_mean
+        P_pred = extract_target_properties(C_pred)[0]
         P_preds.append(P_pred)
 
-        l2_error = np.linalg.norm(P_pred - P_target_unnorm)
-        mse = np.mean((P_pred - P_target_unnorm) ** 2)
+        l2_error = np.linalg.norm(P_pred - P_true_unnorm)
+        mse = np.mean((P_pred - P_true_unnorm) ** 2)
         errors.append(l2_error)
         mses.append(mse)
 
@@ -297,54 +301,53 @@ def evaluate_peaks(S_hat_peaks, P_target, fNN, P_mean, P_std):
 
 
 def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
-                                     P_mean_path, P_std_path, bw,
-                                     N=20, seed=42, device=None):
-    import numpy as np
-    import pandas as pd
-    import torch
-    from IPython.display import HTML, display
-    from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
-    from utils.data_utils.load_data import extract_target_properties
-    from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
+                                     P_mean_path, P_std_path, S_mean_path, S_std_path, 
+                                     bw, N=20, seed=42, device=None):
 
     # load normalization constants
     P_mean = np.load(P_mean_path)
     P_std = np.load(P_std_path)
+    S_mean = np.load(S_mean_path)
+    S_std  = np.load(S_std_path)
+
+    # prevent division by zero
+    epsilon = 1e-8
+    S_std = np.where(S_std < epsilon, 1.0, S_std)
 
     rows = []
 
     for i in range(N):
-        # fet target P vector
-        P_target = P_all[i].unsqueeze(0).to(device)
-        P_target_np = P_target.cpu().numpy().flatten()
-        P_target_unnorm = P_target_np * P_std + P_mean
+        # get target P vector
+        P_true = P_all[i].unsqueeze(0).to(device)
+        P_true = P_true.cpu().numpy().flatten()
+        P_true_norm = (P_true - P_mean) / (P_std + 1e-8)  # normalize for decoder
+        P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)  # shape: (1, 9)
 
         # sample S candidates and extract peaks using same method as notebook
-        S_hats = get_S_hats(decoder, P_target, latent_dim, num_samples=1000, seed=seed+i, device=device)
-        from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_peaks_by_empirical_probability
-        
+        S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed+i, device=device)
+
         # use extract_peaks_with_bandwidth to match notebook approach
-        S_hat_peaks, _ = extract_peaks_with_bandwidth_no_print(
-            S_hats, 
+        S_hat_peaks_norm, _ = extract_peaks_with_bandwidth_no_print(
+            S_hats_norm, 
             use_auto_bandwidth=False, 
             manual_bw=bw, 
             target_range=(5, 8)
         )
         
         # sort peaks by empirical probability to match notebook
-        S_hat_peaks, _, _ = sort_peaks_by_empirical_probability(S_hats, S_hat_peaks, bw, verbose=False)
+        S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
+        S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
 
         # apply constraints
-        S_hat_peaks = enforce_theta_domain(S_hat_peaks)
-        S_hat_peaks = filter_S_candidates(S_hat_peaks)
+        S_hat_peaks_unnorm = enforce_theta_domain(S_hat_peaks_unnorm)
+        S_hat_peaks_unnorm = filter_S_candidates(S_hat_peaks_unnorm)
 
         mses = []
-        for S_peak in S_hat_peaks:
+        for S_peak in S_hat_peaks_unnorm:
             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-            P_pred_norm = extract_target_properties(C_pred)[0]
-            P_pred = P_pred_norm * P_std + P_mean
-            mse = np.mean((P_pred - P_target_unnorm) ** 2)
+            P_pred = extract_target_properties(C_pred)[0]
+            mse = np.mean((P_pred - P_true) ** 2)
             mses.append(mse)
 
         avg_mse = np.mean(mses) if mses else np.nan

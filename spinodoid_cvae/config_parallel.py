@@ -2,7 +2,7 @@
 
 # === set theta and trial ===
 THETA_PATTERN = "001"   # change to "100", "010", "001", etc. as needed
-TRIAL = 9
+TRIAL = 10
 
 # === set attention and flow ===
 USE_ATTENTION_ENCODER = True
@@ -13,7 +13,7 @@ FLOW_TYPE = "realnvp"
 # === model dimensions ===
 S_DIM = 4              # structure parameter dimension
 P_DIM = 9              # target property dimension
-LATENT_DIM = 2        # latent space dimension (can tune later)
+LATENT_DIM = 4        # latent space dimension (can tune later)
 
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder

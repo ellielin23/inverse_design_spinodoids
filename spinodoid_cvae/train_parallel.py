@@ -30,6 +30,12 @@ P_std_path = f"data/partition_by_theta/P_std_theta_{THETA_PATTERN}.npy"
 P_mean = torch.tensor(np.load(P_mean_path), dtype=torch.float32, device=device)
 P_std = torch.tensor(np.load(P_std_path), dtype=torch.float32, device=device)
 
+S_mean_path = f"data/partition_by_theta/S_mean_theta_{THETA_PATTERN}.npy"
+S_std_path = f"data/partition_by_theta/S_std_theta_{THETA_PATTERN}.npy"
+S_mean = torch.tensor(np.load(S_mean_path), dtype=torch.float32, device=device)
+S_std = torch.tensor(np.load(S_std_path), dtype=torch.float32, device=device)
+
+
 
 # === init models ===
 encoder = get_encoder(
@@ -66,7 +72,7 @@ def reparameterize(mu, logvar):
 
 # === training loop ===
 losses, recon_losses, kl_losses = [], [], []
-RECON_WEIGHTS = [1.0, 1.0, 1.0, 1000.0]  # boost volume ratio weight (index 3)
+RECON_WEIGHTS = [1.0, 1.0, 1.0, 1.0]  # boost volume ratio weight if needed
 
 for epoch in range(NUM_EPOCHS):
     encoder.train()
@@ -79,11 +85,13 @@ for epoch in range(NUM_EPOCHS):
         P_batch, S_batch = P_batch.to(device), S_batch.to(device)
         optimizer.zero_grad()
 
-        # normalize P
-        P_norm = (P_batch - P_mean) / P_std
+        # normalize P and S with safeguard against zero division
+        P_norm = (P_batch - P_mean) / (P_std + 1e-8)
+        S_norm = (S_batch - S_mean) / (S_std + 1e-8)
 
         # forward pass
-        mu, logvar = encoder(S_batch, P_norm)
+        mu, logvar = encoder(S_norm, P_norm)
+        logvar = torch.clamp(logvar, min=-10.0, max=10.0)  # prevent explosion
         z = reparameterize(mu, logvar)
         beta = get_kl_beta(epoch, warmup_epochs=50, max_beta=BETA)
 
@@ -92,13 +100,14 @@ for epoch in range(NUM_EPOCHS):
         )
 
         loss, rec, kl = total_loss(
-            S_hat, S_batch, mu, logvar,
+            S_hat, S_norm, mu, logvar,
             log_det=log_det,
             beta=beta,
             component_weights=RECON_WEIGHTS
         )
 
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(params, max_norm=5.0)
         optimizer.step()
 
         total_loss_epoch += loss.item()

@@ -3,6 +3,7 @@
 import torch
 import numpy as np
 from sklearn.cluster import MeanShift
+import pandas as pd
 
 def get_S_hats(decoder, P_val, latent_dim, num_samples=1000, seed=42, device='cpu'):
     """
@@ -173,3 +174,25 @@ def sort_peaks_by_empirical_probability(S_hats, S_hat_peaks, bw_used, verbose=Tr
             print(f"  Peak {i}: {count} samples ({prob:.3f})")
 
     return sorted_centers, sorted_probs, sorted_counts
+
+
+def format_array(arr, precision=5):
+    return "[" + ", ".join(f"{x:.{precision}f}" for x in arr) + "]"
+
+
+def make_candidate_table(S_hat_peaks, S_true):
+    """
+    Create a pretty df showing each Ŝ, the true S, and ΔS.
+    """
+    rows = []
+    for S_hat in S_hat_peaks:
+        delta = S_hat - S_true
+        rows.append({
+            "Ŝ": format_array(S_hat),
+            "S_true": format_array(S_true),
+            "ΔS": format_array(delta)
+        })
+    df = pd.DataFrame(rows)
+    from IPython.display import display
+    display(df)
+    return df
