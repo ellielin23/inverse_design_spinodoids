@@ -72,7 +72,7 @@ def reparameterize(mu, logvar):
 
 # === training loop ===
 losses, recon_losses, kl_losses = [], [], []
-RECON_WEIGHTS = [1.0, 1.0, 1.0, 1.0]  # boost volume ratio weight if needed
+RECON_WEIGHTS = [1.0, 1.0, 1.0, 0.3]  # boost volume ratio weight if needed
 
 for epoch in range(NUM_EPOCHS):
     encoder.train()
