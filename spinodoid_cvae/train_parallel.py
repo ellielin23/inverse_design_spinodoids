@@ -23,7 +23,7 @@ dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # === get data shapes ===
 P_dim = dataset.P.shape[1]
-# S_dim = dataset.S.shape[1]
+S_dim = dataset.S.shape[1]
 
 # === load normalization stats ===
 P_mean_path = f"data/partition_by_theta/P_mean_theta_{THETA_PATTERN}.npy"
@@ -31,16 +31,10 @@ P_std_path = f"data/partition_by_theta/P_std_theta_{THETA_PATTERN}.npy"
 P_mean = torch.tensor(np.load(P_mean_path), dtype=torch.float32, device=device)
 P_std = torch.tensor(np.load(P_std_path), dtype=torch.float32, device=device)
 
-# S_mean_path = f"data/partition_by_theta/S_mean_theta_{THETA_PATTERN}.npy"
-# S_std_path = f"data/partition_by_theta/S_std_theta_{THETA_PATTERN}.npy"
-# S_mean = torch.tensor(np.load(S_mean_path), dtype=torch.float32, device=device)
-# S_std = torch.tensor(np.load(S_std_path), dtype=torch.float32, device=device)
-
-# derive active theta indices from pattern and set S_DIM = k + 1 (active thetas + rho)
-active_idx = active_indices_from_pattern(THETA_PATTERN)  # e.g. "001" -> [2]
-K = len(active_idx)                                      # number of active thetas for this model
-S_DIM = K + 1                                            # model predicts [theta_active..., rho]
-
+S_mean_path = f"data/partition_by_theta/S_mean_theta_{THETA_PATTERN}.npy"
+S_std_path = f"data/partition_by_theta/S_std_theta_{THETA_PATTERN}.npy"
+S_mean = torch.tensor(np.load(S_mean_path), dtype=torch.float32, device=device)
+S_std = torch.tensor(np.load(S_std_path), dtype=torch.float32, device=device)
 
 # === init models ===
 encoder = get_encoder(
@@ -77,8 +71,7 @@ def reparameterize(mu, logvar):
 
 # === training loop ===
 losses, recon_losses, kl_losses = [], [], []
-RECON_WEIGHTS = torch.tensor([1.0] * K + [0.3], dtype=torch.float32, device=device)   # weight each active theta = 1.0, rho = 0.3  # boost volume ratio weight if needed
-assert RECON_WEIGHTS.numel() == S_DIM, "recon weight length must equal S_DIM"
+RECON_WEIGHTS = [1.0, 1.0, 1.0, 0.1]   # weight each active theta = 1.0, rho = 0.3  # boost volume ratio weight if needed
 
 for epoch in range(NUM_EPOCHS):
     encoder.train()
@@ -92,19 +85,18 @@ for epoch in range(NUM_EPOCHS):
         optimizer.zero_grad()
 
         # normalize P and S with safeguard against zero division
-        P_norm = (P_batch - P_mean) / (P_std + 1e-8)             # p: keep z-score
-
-        S_norm_full = normalize_S_torch(S_batch)                 # s: domain-aware [-1,1] on full [θ1,θ2,θ3,ρ]
-        S_norm = pack_active_torch(S_norm_full, active_idx)      # pack only active thetas + ρ
+        P_norm = (P_batch - P_mean) / (P_std + 1e-8)
+        S_norm = (S_batch - S_mean) / (S_std + 1e-8) 
 
         # forward pass
         mu, logvar = encoder(S_norm, P_norm)
-        logvar = torch.clamp(logvar, min=-10.0, max=10.0)        # prevent explosion
+        logvar = torch.clamp(logvar, min=-10.0, max=10.0)  # prevent explosion
         z = reparameterize(mu, logvar)
         beta = get_kl_beta(epoch, warmup_epochs=50, max_beta=BETA)
 
-        S_hat, log_det = (decoder(z, P_norm) if USE_FLOW_DECODER else (decoder(z, P_norm), None))
-        assert S_hat.shape[1] == S_DIM, (f"S_hat has wrong dimension: expected {S_DIM}, got {S_hat.shape[1]}")       # sanity check: predicted vector must match target vector shape
+        S_hat, log_det = (
+            decoder(z, P_norm) if USE_FLOW_DECODER else (decoder(z, P_norm), None)
+        )
 
         loss, rec, kl = total_loss(
             S_hat, S_norm, mu, logvar,
@@ -134,9 +126,7 @@ torch.save(decoder.state_dict(), DECODER_SAVE_PATH)
 
 # === save config file ===
 config_dict = {
-    "THETA_PATTERN": f"{THETA_PATTERN}",      # avoid python invalid integer
-    "ACTIVE_IDX": active_idx, 
-    "S_DIM": S_DIM,
+    "S_DIM": S_dim,
     "P_DIM": P_dim,
     "LATENT_DIM": LATENT_DIM,
     "ENCODER_HIDDEN_DIMS": ENCODER_HIDDEN_DIMS,
@@ -150,6 +140,7 @@ config_dict = {
     "USE_FLOW_DECODER": USE_FLOW_DECODER,
     "USE_ATTENTION_ENCODER": USE_ATTENTION_ENCODER,
     "USE_ATTENTION_DECODER": USE_ATTENTION_DECODER,
+    "THETA_PATTERN": f"{THETA_PATTERN}",      # avoid python invalid integer
     "TRIAL": TRIAL
 }
 

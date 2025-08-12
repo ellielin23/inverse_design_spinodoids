@@ -39,7 +39,7 @@ def _scale_theta_np(theta_deg: float) -> float:
 def _unscale_theta_np(theta_scaled: float) -> float:
     # unscale theta from [-1, 1] to degrees
     # exactly 0 stays 0 (inactive), else [-1, 1] -> [15°, 90°]
-    if theta_scaled == 0.0:
+    if theta_scaled < 1e-6:
         return 0.0
     return ((theta_scaled + 1.0) / 2.0) * THETA_RANGE + THETA_MIN_ACTIVE
 
