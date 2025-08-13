@@ -2,22 +2,17 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 import matplotlib as mpl
-import torch
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import numpy as np
-import pandas as pd
-import numpy as np
 import pandas as pd
 import torch
+from sklearn.decomposition import PCA
+from tqdm import tqdm
 from IPython.display import HTML, display
-from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
+from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks, sort_and_select_peaks_by_probability, extract_peaks_with_bandwidth
 from utils.data_utils.load_data import extract_target_properties
 from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
-from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_and_select_peaks_by_probability
-
+from utils.evaluate_utils.error import compute_tensor_error
 
 def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
     """
@@ -31,7 +26,7 @@ def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
         S_true (np.ndarray): Ground-truth structure vector, shape (S_dim,)
         S_hat_peaks (np.ndarray): Peak candidates from S_hats, shape (N_peaks, S_dim)
     """
-    # === PCA transformation ===
+    # === pca transformation ===
     pca = PCA(n_components=2)
     S_pca = pca.fit_transform(S_hats)
     S_true_pca = pca.transform(S_true.reshape(1, -1))
@@ -300,81 +295,11 @@ def evaluate_peaks(S_hat_peaks_unnorm, P_true_unnorm, fNN):
     return P_preds, errors, mses, df, C_preds
 
 
-# def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
-#                                      P_mean_path, P_std_path, S_mean_path, S_std_path, 
-#                                      bw, N=20, seed=42, device=None):
-
-#     # load normalization constants
-#     P_mean = np.load(P_mean_path)
-#     P_std = np.load(P_std_path)
-#     S_mean = np.load(S_mean_path)
-#     S_std  = np.load(S_std_path)
-
-#     # prevent division by zero
-#     epsilon = 1e-8
-#     S_std = np.where(S_std < epsilon, 1.0, S_std)
-
-#     rows = []
-
-#     for i in range(N):
-#         # get target P vector
-#         P_true = P_all[i].unsqueeze(0).to(device)
-#         P_true = P_true.cpu().numpy().flatten()
-#         P_true_norm = (P_true - P_mean) / (P_std + 1e-8)  # normalize for decoder
-#         P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)  # shape: (1, 9)
-
-#         # sample S candidates and extract peaks using same method as notebook
-#         S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed+i, device=device)
-
-#         # use extract_peaks_with_bandwidth to match notebook approach
-#         S_hat_peaks_norm, _ = extract_peaks_with_bandwidth_no_print(
-#             S_hats_norm, 
-#             use_auto_bandwidth=False, 
-#             manual_bw=bw, 
-#             target_range=(5, 8)
-#         )
-        
-#         # sort peaks by empirical probability to match notebook
-#         S_hat_peaks_norm, _, _ = sort_and_select_peaks_by_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
-#         S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
-
-#         # apply constraints
-#         S_hat_peaks_unnorm = enforce_theta_domain(S_hat_peaks_unnorm)
-#         S_hat_peaks_unnorm = filter_S_candidates(S_hat_peaks_unnorm)
-
-#         mses = []
-#         for S_peak in S_hat_peaks_unnorm:
-#             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # shape: (1, 1, 4)
-#             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-#             P_pred = extract_target_properties(C_pred)[0]
-#             mse = np.mean((P_pred - P_true) ** 2)
-#             mses.append(mse)
-
-#         avg_mse = np.mean(mses) if mses else np.nan
-#         rows.append({"(Sᵢ, Pᵢ) index": f"{i}", "Avg MSE": round(avg_mse, 5)})
-
-#     overall_avg = round(np.nanmean([row["Avg MSE"] for row in rows]), 5)
-#     print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
-
-#     df = pd.DataFrame(rows)
-#     display(HTML(df.to_html(index=False)))
-#     return df
-
-
 def evaluate_mse_and_pass_count_per_target_pair(
     decoder, P_all, S_all, C_all, latent_dim, fNN,
     P_mean, P_std, S_mean, S_std,
     bw, N=20, threshold=0.08, seed=42, device=None
 ):
-    from tqdm import tqdm
-    import numpy as np
-    import pandas as pd
-    from IPython.display import display, HTML
-    from utils.evaluate_utils.sampling import sort_and_select_peaks_by_probability, extract_peaks_with_bandwidth
-    from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
-    from utils.data_utils.load_data import extract_target_properties
-    from utils.evaluate_utils.error import compute_tensor_error
-
     rows = []
     bw_mode = "auto" if (isinstance(bw, str) and bw.lower() == "auto") else "manual"
 
@@ -417,9 +342,10 @@ def evaluate_mse_and_pass_count_per_target_pair(
         S_hat_peaks = enforce_theta_domain(S_hat_peaks)
         S_hat_peaks = filter_S_candidates(S_hat_peaks)
 
-        # === forward model + MSEs ===
+        # === forward model + MSEs + pass mask ===
         mses = []
         pass_count = 0
+        pass_mask = []  # track which candidates pass
         for S_peak in S_hat_peaks:
             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # (1,1,4)
             C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
@@ -427,13 +353,23 @@ def evaluate_mse_and_pass_count_per_target_pair(
             mse = np.mean((P_pred - P_true) ** 2)
             mses.append(mse)
 
-            # pass/fail check
-            if compute_tensor_error(C_true, C_pred[0]) < threshold:
+            is_pass = (compute_tensor_error(C_true, C_pred[0]) < threshold)
+            pass_mask.append(is_pass)
+            if is_pass:
                 pass_count += 1
 
         avg_mse = np.mean(mses) if mses else np.nan
         total = len(S_hat_peaks)
         pass_rate = (pass_count / total) if total > 0 else np.nan
+
+        # === "interesting among passed": any theta component differs by ≥ 5 from S_true ===
+        if total > 0:
+            theta_diff = np.abs(S_hat_peaks[:, :3] - S_true[:3])  # compare in UNnormalized units
+            interesting_mask = (theta_diff >= 5.0).any(axis=1)
+            pass_mask = np.array(pass_mask, dtype=bool)
+            num_interesting = int(np.sum(interesting_mask & pass_mask))
+        else:
+            num_interesting = 0
 
         rows.append({
             "index": i,
@@ -441,7 +377,8 @@ def evaluate_mse_and_pass_count_per_target_pair(
             "avg_mse": round(avg_mse, 5),
             "num_candidates": total,
             "num_pass": pass_count,
-            "pass_rate": round(pass_rate, 2)
+            "pass_rate": round(pass_rate*100, 2),
+            "num_interesting": num_interesting  # <- counted among the passed
         })
 
     # === aggregate stats ===
@@ -449,14 +386,15 @@ def evaluate_mse_and_pass_count_per_target_pair(
     avg_mse_all = float(np.nanmean(df["avg_mse"])) if len(df) else np.nan
     avg_pass_count = float(np.nanmean(df["num_pass"])) if len(df) else np.nan
     avg_pass_rate  = float(np.nanmean(df["pass_rate"])) if len(df) else np.nan
+    avg_pass_interesting  = float(np.nanmean(df["num_interesting"])) if len(df) else np.nan
 
-    print(f"\n✅ Overall avg MSE: {avg_mse_all:.5f} | "
-          f"avg passing candidates: {avg_pass_count:.2f} | "
-          f"avg pass rate: {avg_pass_rate*100:.1f}% "
-          f"(threshold={threshold}, bw={bw})")
+    print(f"\n✅ avg mse: {avg_mse_all:.5f}"
+          f"\n✅ avg passing candidates: {avg_pass_count:.2f}"
+          f"\n✅ avg pass rate: {avg_pass_rate}% "
+          f"\n✅ avg interesting candidates: {avg_pass_interesting}")
 
     display(HTML(df.to_html(index=False)))
-    return df, avg_mse_all, avg_pass_count, avg_pass_rate
+    return avg_mse_all, avg_pass_count, avg_pass_rate, avg_pass_interesting
 
 
 def plot_pred_vs_true_scatter(P_true_unnorm, P_preds, component_labels=None, trial=None):
@@ -488,7 +426,7 @@ def plot_pred_vs_true_scatter(P_true_unnorm, P_preds, component_labels=None, tri
         y_vals = P_preds[:, i]
         ax.scatter(x_vals, y_vals, label=component_labels[i], alpha=0.7)
 
-    # Diagonal line
+    # diagonal line
     ax.plot([min_val - buffer, max_val + buffer], [min_val - buffer, max_val + buffer],
             'k--', linewidth=1)
 

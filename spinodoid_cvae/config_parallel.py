@@ -1,8 +1,8 @@
 # config_parallel.py
 
 # === set theta and trial ===
-THETA_PATTERN = "011"   # change to "100", "010", "001", etc. as needed
-TRIAL = 7
+THETA_PATTERN = "111"   # change to "100", "010", "001", etc. as needed
+TRIAL = 5
 
 # === set attention and flow ===
 USE_ATTENTION_ENCODER = True
@@ -18,13 +18,13 @@ LATENT_DIM = 4        # latent space dimension (can tune later)
 # === model architecture ===
 ENCODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for encoder
 DECODER_HIDDEN_DIMS = [128, 64, 32] # hidden dimensions for decoder
-NUM_FLOWS = 6
+NUM_FLOWS = 4
 
 # === training hyperparameters ===
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
-NUM_EPOCHS = 200
-BETA = 0.01           # KL divergence weighting
+NUM_EPOCHS = 150
+BETA = 1.0          # KL divergence weighting
 DROPOUT_PROB = 0.0
 
 # === data ===
