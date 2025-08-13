@@ -16,7 +16,7 @@ from IPython.display import HTML, display
 from utils.evaluate_utils.sampling import get_S_hats, get_S_hat_peaks
 from utils.data_utils.load_data import extract_target_properties
 from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
-from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_peaks_by_empirical_probability
+from utils.evaluate_utils.sampling import extract_peaks_with_bandwidth_no_print, sort_and_select_peaks_by_probability
 
 
 def plot_S_hat_space(S_hats, S_true, S_hat_peaks):
@@ -335,7 +335,7 @@ def evaluate_peaks(S_hat_peaks_unnorm, P_true_unnorm, fNN):
 #         )
         
 #         # sort peaks by empirical probability to match notebook
-#         S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
+#         S_hat_peaks_norm, _, _ = sort_and_select_peaks_by_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
 #         S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
 
 #         # apply constraints
@@ -361,137 +361,102 @@ def evaluate_peaks(S_hat_peaks_unnorm, P_true_unnorm, fNN):
 #     return df
 
 
-def evaluate_avg_mse_per_target_pair(decoder, P_all, S_all, latent_dim, fNN,
-                                     P_mean_path, P_std_path, S_mean_path, S_std_path, 
-                                     bw, N=20, seed=None, device=None):
-
-    # === load normalization constants ===
-    P_mean = np.load(P_mean_path)
-    P_std = np.load(P_std_path)
-    S_mean = np.load(S_mean_path)
-    S_std  = np.load(S_std_path)
-
-    epsilon = 1e-8
-    S_std = np.where(S_std < epsilon, 1.0, S_std)
-
-    rows = []
-
-    for i in range(N):
-        # === get true P and S vectors ===
-        P_true = P_all[i].unsqueeze(0).to(device).cpu().numpy().flatten()
-        S_true = S_all[i].cpu().numpy().flatten()
-
-        # === normalize P for decoder ===
-        P_true_norm = (P_true - P_mean) / (P_std + epsilon)
-        P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32).unsqueeze(0).to(device)
-
-        # === generate and process S-hats ===
-        S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed, device=device)
-
-        S_hat_peaks_norm, _ = extract_peaks_with_bandwidth_no_print(
-            S_hats_norm, use_auto_bandwidth=False, manual_bw=bw, target_range=(5, 8)
-        )
-
-        S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(
-            S_hats_norm, S_hat_peaks_norm, bw, verbose=False
-        )
-
-        S_hat_peaks_unnorm = S_hat_peaks_norm * S_std + S_mean
-        S_hat_peaks_unnorm = enforce_theta_domain(S_hat_peaks_unnorm)
-        S_hat_peaks_unnorm = filter_S_candidates(S_hat_peaks_unnorm)
-
-        # === forward model + MSE ===
-        mses = []
-        for S_peak in S_hat_peaks_unnorm:
-            S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # (1, 1, 4)
-            C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
-            P_pred = extract_target_properties(C_pred)[0]
-            mse = np.mean((P_pred - P_true) ** 2)
-            mses.append(mse)
-
-        avg_mse = np.mean(mses) if mses else np.nan
-
-        print(f"[{i:02d}] ✅ Avg MSE: {avg_mse:.5f}")
-
-        rows.append({
-            "(Sᵢ, Pᵢ) index": i,
-            "Avg MSE": round(avg_mse, 5),
-            "S_true": np.round(S_true, 4),
-            "P_true": np.round(P_true, 4)
-        })
-
-    overall_avg = round(np.nanmean([row["Avg MSE"] for row in rows]), 5)
-    print(f"\n✅ Overall average MSE across all (Sᵢ, Pᵢ) pairs: {overall_avg:.5f}")
-
-    df = pd.DataFrame(rows)
-    display(HTML(df.to_html(index=False)))
-    return df
-
-
-def evaluate_avg_pass_count_per_target_pair(
+def evaluate_mse_and_pass_count_per_target_pair(
     decoder, P_all, S_all, C_all, latent_dim, fNN,
-    P_mean_path, P_std_path, S_mean_path, S_std_path,
-    bw, N=20, threshold=0.08, seed=12345, device=None
+    P_mean, P_std, S_mean, S_std,
+    bw, N=20, threshold=0.08, seed=42, device=None
 ):
+    from tqdm import tqdm
     import numpy as np
     import pandas as pd
     from IPython.display import display, HTML
-    from utils.evaluate_utils.sampling import sort_peaks_by_empirical_probability
+    from utils.evaluate_utils.sampling import sort_and_select_peaks_by_probability, extract_peaks_with_bandwidth
     from utils.evaluate_utils.structure_constraints import enforce_theta_domain, filter_S_candidates
     from utils.data_utils.load_data import extract_target_properties
     from utils.evaluate_utils.error import compute_tensor_error
 
-    # === load normalization ===
-    P_mean = np.load(P_mean_path); P_std = np.load(P_std_path)
-    S_mean = np.load(S_mean_path); S_std = np.load(S_std_path)
-    eps = 1e-8
-    S_std = np.where(S_std < eps, 1.0, S_std)
-
     rows = []
-    for i in range(N):
-        # === ground truth for this pair ===
+    bw_mode = "auto" if (isinstance(bw, str) and bw.lower() == "auto") else "manual"
+
+    for i in tqdm(range(N), desc="Evaluating target pairs", unit="pair"):
+        # === ground truth ===
         P_true = P_all[i].unsqueeze(0).to(device).cpu().numpy().flatten()
+        S_true = S_all[i].cpu().numpy().flatten()
         C_true = C_all[i]  # shape (3,3,3,3)
 
-        # === normalize P for decoder ===
-        P_true_norm = (P_true - P_mean) / (P_std + eps)
+        # === normalize P ===
+        P_true_norm = (P_true - P_mean) / (P_std)
         P_true_norm = torch.tensor(P_true_norm, dtype=torch.float32, device=device).unsqueeze(0)
 
-        # === sample Ŝ and get peaks ===
+        # === sample from decoder ===
         S_hats_norm = get_S_hats(decoder, P_true_norm, latent_dim, num_samples=1000, seed=seed, device=device)
+        
+        # === peaks + bandwidth (per-pair) ===
+        if bw_mode == "auto":
+            S_hat_peaks_norm, bw_used = extract_peaks_with_bandwidth(
+                S_hats_norm,
+                use_auto_bandwidth=True,
+                target_range=(1, 10),
+                verbose=False
+            )
+        else:
+            bw_used = float(bw)
+            S_hat_peaks_norm = get_S_hat_peaks(S_hats_norm, bandwidth=bw_used)
 
-        # manual bandwidth to avoid target-coupling
-        S_hat_peaks_norm = get_S_hat_peaks(S_hats_norm, bandwidth=bw)
-        S_hat_peaks_norm, _, _ = sort_peaks_by_empirical_probability(S_hats_norm, S_hat_peaks_norm, bw, verbose=False)
+        # sort + probability filter uses the *per-pair* bw_used
+        S_hat_peaks_norm, _, _ = sort_and_select_peaks_by_probability(
+            S_hats_norm, 
+            S_hat_peaks_norm, 
+            bw_used, 
+            prob_threshold=0.10,
+            verbose=False
+        )
 
         # === denorm + constraints ===
         S_hat_peaks = S_hat_peaks_norm * S_std + S_mean
         S_hat_peaks = enforce_theta_domain(S_hat_peaks)
         S_hat_peaks = filter_S_candidates(S_hat_peaks)
 
-        # === forward → error → pass/fail ===
+        # === forward model + MSEs ===
+        mses = []
         pass_count = 0
         for S_peak in S_hat_peaks:
             S_peak_tf = np.expand_dims(S_peak, axis=(0, 1))  # (1,1,4)
-            C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)[0]
-            err = compute_tensor_error(C_true, C_pred)
-            if err < threshold:
+            C_pred = fNN(S_peak_tf).numpy().reshape(1, 3, 3, 3, 3)
+            P_pred = extract_target_properties(C_pred)[0]
+            mse = np.mean((P_pred - P_true) ** 2)
+            mses.append(mse)
+
+            # pass/fail check
+            if compute_tensor_error(C_true, C_pred[0]) < threshold:
                 pass_count += 1
 
+        avg_mse = np.mean(mses) if mses else np.nan
         total = len(S_hat_peaks)
+        pass_rate = (pass_count / total) if total > 0 else np.nan
+
         rows.append({
             "index": i,
+            "S_true": np.round(S_true, 4),
+            "avg_mse": round(avg_mse, 5),
             "num_candidates": total,
             "num_pass": pass_count,
-            "pass_rate": (pass_count / total) if total > 0 else np.nan,
+            "pass_rate": round(pass_rate, 2)
         })
 
+    # === aggregate stats ===
     df = pd.DataFrame(rows)
+    avg_mse_all = float(np.nanmean(df["avg_mse"])) if len(df) else np.nan
     avg_pass_count = float(np.nanmean(df["num_pass"])) if len(df) else np.nan
     avg_pass_rate  = float(np.nanmean(df["pass_rate"])) if len(df) else np.nan
-    print(f"✅ Overall avg passing candidates: {avg_pass_count:.2f}  |  avg pass rate: {avg_pass_rate*100:.1f}%  (threshold={threshold}, bw={bw})")
+
+    print(f"\n✅ Overall avg MSE: {avg_mse_all:.5f} | "
+          f"avg passing candidates: {avg_pass_count:.2f} | "
+          f"avg pass rate: {avg_pass_rate*100:.1f}% "
+          f"(threshold={threshold}, bw={bw})")
+
     display(HTML(df.to_html(index=False)))
-    return df, avg_pass_count, avg_pass_rate
+    return df, avg_mse_all, avg_pass_count, avg_pass_rate
 
 
 def plot_pred_vs_true_scatter(P_true_unnorm, P_preds, component_labels=None, trial=None):
