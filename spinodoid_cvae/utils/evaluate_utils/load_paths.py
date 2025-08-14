@@ -2,7 +2,7 @@
 
 import os
 
-def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLOW_TYPE="realnvp"):
+def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLOW_TYPE="realnvp", verbose=True):
     """
     Dynamically construct paths for config, checkpoints, means/stds, and data
     based on model type (theta-model, flow-based, or vanilla CVAE).
@@ -28,7 +28,8 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
         paths["P_std_path"]    = f"data/partition_by_theta/P_std_theta_{THETA_PATTERN}.npy"
         paths["S_mean_path"]   = f"data/partition_by_theta/S_mean_theta_{THETA_PATTERN}.npy"
         paths["S_std_path"]    = f"data/partition_by_theta/S_std_theta_{THETA_PATTERN}.npy"
-        print(f"✅ Loaded files from theta_{THETA_PATTERN} for trial {TRIAL}")
+        if verbose:
+            print(f"✅ Loaded files from theta_{THETA_PATTERN} for trial {TRIAL}")
 
     elif not USE_FLOW:
         paths["trial_dir"]     = f"checkpoints/trial_{TRIAL}"
@@ -40,7 +41,8 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
         paths["P_std_path"]    = "data/P_std.npy"
         paths["S_mean_path"]   = "data/S_mean.npy"
         paths["S_std_path"]    = "data/S_std.npy"
-        print(f"✅ Loaded files from trial {TRIAL} for no flow")
+        if verbose:
+            print(f"✅ Loaded files from trial {TRIAL} for no flow")
 
     elif USE_FLOW:
         paths["trial_dir"]     = f"flow_checkpoints/{FLOW_TYPE}/{FLOW_TYPE}_trial_{TRIAL}"
@@ -52,6 +54,7 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
         paths["P_std_path"]    = "data/P_std.npy"
         paths["S_mean_path"]   = "data/S_mean.npy"
         paths["S_std_path"]    = "data/S_std.npy"
-        print(f"✅ Loaded files from trial {TRIAL} for {FLOW_TYPE} flow")
+        if verbose:
+            print(f"✅ Loaded files from trial {TRIAL} for {FLOW_TYPE} flow")
 
     return paths

@@ -24,7 +24,7 @@ NUM_FLOWS = 4
 BATCH_SIZE = 64
 LEARNING_RATE = 5e-4
 NUM_EPOCHS = 150
-BETA = 1.0          # KL divergence weighting
+BETA = 0.8         # KL divergence weighting
 DROPOUT_PROB = 0.0
 
 # === data ===
