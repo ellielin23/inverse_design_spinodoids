@@ -52,16 +52,16 @@ Assumptions:
 --------------------------------------------------------------------------------
 ## Input format<br>
 - CSV with **no headers**.<br>
-- Each row is **21 Mandel** upper-triangle values of the symmetric **6x6** stiffness matrix **C** (row-major upper triangle). Order of the 21 values:<br>
-&nbsp;&nbsp;(0,0),<br>
-&nbsp;&nbsp;(0,1),(0,2),(0,3),(0,4),(0,5),<br>
-&nbsp;&nbsp;(1,1),(1,2),(1,3),(1,4),(1,5),<br>
-&nbsp;&nbsp;(2,2),(2,3),(2,4),(2,5),<br>
-&nbsp;&nbsp;(3,3),(3,4),(3,5),<br>
-&nbsp;&nbsp;(4,4),(4,5),<br>
-&nbsp;&nbsp;(5,5)<br>
+- Each row is **21 Mandel** upper-triangle values of the symmetric **6x6** stiffness matrix **C** (row-major upper triangle). Order of the 21 values:<br><br>
+(0,0),<br>
+(0,1),(0,2),(0,3),(0,4),(0,5),<br>
+(1,1),(1,2),(1,3),(1,4),(1,5),<br>
+(2,2),(2,3),(2,4),(2,5),<br>
+(3,3),(3,4),(3,5),<br>
+(4,4),(4,5),<br>
+(5,5)<br><br>
 - Minimal example (single row):<br><br>
-0.25739938,0.08234422,0.08384212,-0.001122892,0.0018023637,-0.00040648473,0.2489467,0.084682286,7.031013e-05,0.0009808041,0.00050578703,0.26596344,0.0002066667,0.0023057577,0.0029397272,0.16781569,-0.00031259615,0.001966438,0.17230871,8.903016e-05,0.17266414<br>
+0.25739938,0.08234422,0.08384212,-0.001122892,0.0018023637,-0.00040648473,0.2489467,0.084682286,7.031013e-05,0.0009808041,0.00050578703,0.26596344,0.0002066667,0.0023057577,0.0029397272,0.16781569,-0.00031259615,0.001966438,0.17230871,8.903016e-05,0.17266414<br><br>
 - The script reconstructs the full **3x3x3x3** tensor and extracts **P ∈ R^9**:<br><br>
 [C1111, C1122, C1133, C2222, C2233, C3333, C1212, C1313, C2323]<br>
 
@@ -81,11 +81,11 @@ Assumptions:
 
 --------------------------------------------------------------------------------
 ## Outputs<br>
-For each input row `i` the script writes:<br>
+For each input row `i` the script writes:<br><br>
 outputs/row_i/<br>
 &nbsp;&nbsp;all_candidates.csv<br>
 &nbsp;&nbsp;passing_candidates.csv<br>
-&nbsp;&nbsp;meta.json<br><br><br>
+&nbsp;&nbsp;meta.json<br><br>
 
 `all_candidates.csv` / `passing_candidates.csv` columns:<br>
 - tag       : theta pattern (one of 001,010,100,011,101,110,111)<br>
@@ -97,35 +97,39 @@ outputs/row_i/<br>
 
 --------------------------------------------------------------------------------
 ## CLI usage<br>
-Basic:<br>
-&nbsp;&nbsp;python infer.py --csv PATH/TO/file.csv<br>
-Options:<br>
-&nbsp;&nbsp;--tags            Comma list or "all". Default = all seven (001,010,100,011,101,110,111)<br>
-&nbsp;&nbsp;--pass-threshold  PASS if error < fraction. Default = 0.04 (4%)<br>
-&nbsp;&nbsp;--prob-threshold  KDE peak probability filter. Default = 0.10<br>
-&nbsp;&nbsp;--samples         Latent samples per model. Default = 1000<br>
-&nbsp;&nbsp;--bandwidth       "auto" (default) or a float (e.g., 0.3) for KDE<br>
-&nbsp;&nbsp;--device          cpu | cuda | mps (Apple). Omit to auto-select<br>
-&nbsp;&nbsp;--seed            RNG seed. Default = 42<br>
-&nbsp;&nbsp;--outdir          Output folder. Default = outputs<br>
-Examples:<br>
-&nbsp;&nbsp;python infer.py --csv data/target_samples.csv<br>
-&nbsp;&nbsp;python infer.py --csv data/target_samples.csv --tags 001,011,111 --pass-threshold 0.05<br>
-&nbsp;&nbsp;python infer.py --csv data/target_samples.csv --samples 1500 --device cpu<br>
+- Basic:<br>
+python infer.py --csv PATH/TO/file.csv<br><br>
+
+- Options:<br>
+--tags            Comma list or "all". Default = all seven (001,010,100,011,101,110,111)<br>
+--pass-threshold  PASS if error < fraction. Default = 0.04 (4%)<br>
+--prob-threshold  KDE peak probability filter. Default = 0.10<br>
+--samples         Latent samples per model. Default = 1000<br>
+--bandwidth       "auto" (default) or a float (e.g., 0.3) for KDE<br>
+--device          cpu | cuda | mps (Apple). Omit to auto-select<br>
+--seed            RNG seed. Default = 42<br>
+--outdir          Output folder. Default = outputs<br><br>
+
+- Examples:<br>
+python infer.py --csv data/target_samples.csv<br>
+python infer.py --csv data/target_samples.csv --tags 001,011,111 --pass-threshold 0.05<br>
+python infer.py --csv data/target_samples.csv --samples 1500 --device cpu<br>
 
 --------------------------------------------------------------------------------
 ## Model bundle requirements (per tag under `models/<tag>/`)<br>
-Required files:<br>
-&nbsp;&nbsp;config_<tag>.json<br>
-&nbsp;&nbsp;decoder_<tag>.pt<br>
-&nbsp;&nbsp;P_mean_<tag>.npy<br>
-&nbsp;&nbsp;P_std_<tag>.npy<br>
-&nbsp;&nbsp;S_mean_<tag>.npy<br>
-&nbsp;&nbsp;S_std_<tag>.npy<br>
-Config keys used by the loader:<br>
-&nbsp;&nbsp;S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, USE_ATTENTION_DECODER, DROPOUT_PROB<br>
-Important:<br>
-&nbsp;&nbsp;DROPOUT_PROB in the JSON must match training. Mismatched dropout changes layer indices and breaks strict loading.<br>
+- Required files:<br>
+config_<tag>.json<br>
+decoder_<tag>.pt<br>
+P_mean_<tag>.npy<br>
+P_std_<tag>.npy<br>
+S_mean_<tag>.npy<br>
+S_std_<tag>.npy<br><br>
+
+- Config keys used by the loader:<br>
+S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, USE_ATTENTION_DECODER, DROPOUT_PROB<br><br>
+
+- Important:<br>
+DROPOUT_PROB in the JSON must match training. Mismatched dropout changes layer indices and breaks strict loading.<br>
 
 --------------------------------------------------------------------------------
 ## Install notes<br>
