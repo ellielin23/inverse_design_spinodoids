@@ -1,19 +1,9 @@
 {
-  "tag": "row_2",
-  "P_true": [
-    0.26596344,
-    0.08384212,
-    0.084682286,
-    0.25739938,
-    0.08234422,
-    0.2489467,
-    0.086154355,
-    0.08633207,
-    0.083907845
-  ],
-  "pass_threshold": 0.05,
+  "mode": "csv_c_unlabeled_21",
+  "row": 2,
+  "pass_threshold_fraction": 0.04,
   "prob_threshold": 0.1,
-  "samples": 1500,
+  "samples": 1000,
   "bandwidth": "auto",
   "models": [
     {
@@ -46,5 +36,6 @@
     }
   ],
   "device": "cpu",
-  "seed": 42
+  "seed": 42,
+  "source_csv": "data/infer_targets.csv"
 }

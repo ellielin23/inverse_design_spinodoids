@@ -19,7 +19,7 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
 
     if THETA_MODEL:
         assert THETA_PATTERN is not None, "THETA_PATTERN must be provided if THETA_MODEL is True"
-        paths["trial_dir"]     = f"parallel_checkpoints/theta_{THETA_PATTERN}/{THETA_PATTERN}_trial_{TRIAL}"
+        paths["trial_dir"]     = f"checkpoints/theta_{THETA_PATTERN}/{THETA_PATTERN}_trial_{TRIAL}"
         paths["DATA_PATH"]     = f"data/partition_by_theta/theta_{THETA_PATTERN}.csv"
         paths["config_path"]   = os.path.join(paths["trial_dir"], f"{THETA_PATTERN}_config_{TRIAL}.txt")
         paths["encoder_path"]  = os.path.join(paths["trial_dir"], f"encoder_ckpt_{TRIAL}.pt")
@@ -32,7 +32,7 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
             print(f"✅ Loaded files from theta_{THETA_PATTERN} for trial {TRIAL}")
 
     elif not USE_FLOW:
-        paths["trial_dir"]     = f"checkpoints/trial_{TRIAL}"
+        paths["trial_dir"]     = f"archives/checkpoints/trial_{TRIAL}"
         paths["DATA_PATH"]     = "data/train/large_dataset.csv"
         paths["config_path"]   = os.path.join(paths["trial_dir"], f"config_{TRIAL}.txt")
         paths["encoder_path"]  = os.path.join(paths["trial_dir"], f"encoder_ckpt_{TRIAL}.pt")
@@ -45,7 +45,7 @@ def load_paths(TRIAL, THETA_MODEL=False, THETA_PATTERN=None, USE_FLOW=False, FLO
             print(f"✅ Loaded files from trial {TRIAL} for no flow")
 
     elif USE_FLOW:
-        paths["trial_dir"]     = f"flow_checkpoints/{FLOW_TYPE}/{FLOW_TYPE}_trial_{TRIAL}"
+        paths["trial_dir"]     = f"archives/flow_checkpoints/{FLOW_TYPE}/{FLOW_TYPE}_trial_{TRIAL}"
         paths["DATA_PATH"]     = "data/train/large_dataset.csv"
         paths["config_path"]   = os.path.join(paths["trial_dir"], f"config_{TRIAL}.txt")
         paths["encoder_path"]  = os.path.join(paths["trial_dir"], f"encoder_ckpt_{TRIAL}.pt")

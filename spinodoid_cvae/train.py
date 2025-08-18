@@ -1,4 +1,4 @@
-# train_parallel.py
+# train.py
 
 import os
 import torch
@@ -26,13 +26,13 @@ P_dim = dataset.P.shape[1]
 S_dim = dataset.S.shape[1]
 
 # === load normalization stats ===
-P_mean_path = f"data/partition_by_theta/P_mean_theta_{THETA_PATTERN}.npy"
-P_std_path = f"data/partition_by_theta/P_std_theta_{THETA_PATTERN}.npy"
+P_mean_path = f"data/partition_by_theta/P_mean_theta_{TAG}.npy"
+P_std_path = f"data/partition_by_theta/P_std_theta_{TAG}.npy"
 P_mean = torch.tensor(np.load(P_mean_path), dtype=torch.float32, device=device)
 P_std = torch.tensor(np.load(P_std_path), dtype=torch.float32, device=device)
 
-S_mean_path = f"data/partition_by_theta/S_mean_theta_{THETA_PATTERN}.npy"
-S_std_path = f"data/partition_by_theta/S_std_theta_{THETA_PATTERN}.npy"
+S_mean_path = f"data/partition_by_theta/S_mean_theta_{TAG}.npy"
+S_std_path = f"data/partition_by_theta/S_std_theta_{TAG}.npy"
 S_mean = torch.tensor(np.load(S_mean_path), dtype=torch.float32, device=device)
 S_std = torch.tensor(np.load(S_std_path), dtype=torch.float32, device=device)
 
@@ -71,7 +71,7 @@ def reparameterize(mu, logvar):
 
 # === training loop ===
 losses, recon_losses, kl_losses = [], [], []
-RECON_WEIGHTS = [1.0, 1.0, 1.0, 0.8]
+RECON_WEIGHTS = [1.0, 1.0, 1.0, 0.3]
 
 for epoch in range(NUM_EPOCHS):
     encoder.train()
@@ -140,7 +140,7 @@ config_dict = {
     "USE_FLOW_DECODER": USE_FLOW_DECODER,
     "USE_ATTENTION_ENCODER": USE_ATTENTION_ENCODER,
     "USE_ATTENTION_DECODER": USE_ATTENTION_DECODER,
-    "THETA_PATTERN": f"{THETA_PATTERN}",      # avoid python invalid integer
+    "THETA_PATTERN": f"{TAG}",      # avoid python invalid integer
     "TRIAL": TRIAL
 }
 
@@ -152,7 +152,7 @@ plt.plot(recon_losses, label='Reconstruction Loss')
 plt.plot(kl_losses, label='KL Divergence')
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
-plt.title(f"Training Loss Curve (Trial {TRIAL}, θ pattern {THETA_PATTERN})")
+plt.title(f"Training Loss Curve (Trial {TRIAL}, θ pattern {TAG})")
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
