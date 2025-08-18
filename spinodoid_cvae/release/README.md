@@ -19,31 +19,31 @@ Common options:
     python infer.py --csv data/target_samples.csv --samples 1500 --device cpu<br>
 
 --------------------------------------------------------------------------------
-## Directory layout (relative to `release/`)<br>
+## Directory layout<br>
 release/<br>
-&nbsp;&nbsp;infer.py<br>
-&nbsp;&nbsp;requirements.txt<br>
-&nbsp;&nbsp;models/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;infer.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requirements.txt<br>
+&nbsp;&nbsp;&nbsp;&nbsp;models/<br>
 &nbsp;&nbsp;&nbsp;&nbsp;001/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config_001.json<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decoder_001.pt<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_mean_001.npy<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_std_001.npy<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_mean_001.npy<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_std_001.npy<br>
-&nbsp;&nbsp;&nbsp;&nbsp;010/ (same pattern)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;100/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;011/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;101/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;110/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;111/<br>
-&nbsp;&nbsp;fNN/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;fNN.h5<br>
-&nbsp;&nbsp;utils/<br>
-&nbsp;&nbsp;&nbsp;&nbsp;formatting.py<br>
-&nbsp;&nbsp;&nbsp;&nbsp;data_processing.py<br>
-&nbsp;&nbsp;&nbsp;&nbsp;model_loaders.py<br>
-&nbsp;&nbsp;&nbsp;&nbsp;evaluate.py<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config_001.json<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decoder_001.pt<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_mean_001.npy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_std_001.npy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_mean_001.npy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_std_001.npy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;010/ (same pattern)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;100/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;011/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;101/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;110/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;111/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fNN/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fNN.h5<br>
+&nbsp;&nbsp;&nbsp;&nbsp;utils/<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;formatting.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_processing.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;model_loaders.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;evaluate.py<br><br>
 
 Assumptions:
 - Model bundles live in `models/<tag>/`<br>
