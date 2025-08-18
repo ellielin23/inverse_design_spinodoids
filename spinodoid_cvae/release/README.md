@@ -3,7 +3,7 @@
 CLI for inverse design from elasticity tensors C (Mandel 21) to structure parameters S_hat, using trained parallel CVAE decoders plus Max's forward fNN.
 
 --------------------------------------------------------------------------------
-QUICKSTART
+# QUICKSTART
 --------------------------------------------------------------------------------
 From the release/ folder:
 
@@ -14,17 +14,17 @@ From the release/ folder:
    python infer.py --csv data/target_samples.csv
 
 Common options:
-   # choose a subset of tags (default = all seven)
+   ### choose a subset of tags (default = all seven)
    python infer.py --csv data/target_samples.csv --tags 001,011,111
 
-   # tighten pass threshold to 5%
+   ### tighten pass threshold to 5%
    python infer.py --csv data/target_samples.csv --pass-threshold 0.05
 
-   # increase latent samples and force CPU
+   ### increase latent samples and force CPU
    python infer.py --csv data/target_samples.csv --samples 1500 --device cpu
 
 --------------------------------------------------------------------------------
-DIRECTORY LAYOUT (relative to release/)
+# DIRECTORY LAYOUT (relative to release/)
 --------------------------------------------------------------------------------
 release/
   infer.py
@@ -60,7 +60,7 @@ Assumptions:
 - fNN model lives at fNN/fNN.h5
 
 --------------------------------------------------------------------------------
-INPUT FORMAT
+# INPUT FORMAT
 --------------------------------------------------------------------------------
 - CSV with NO headers.
 - Each row is 21 Mandel upper-triangle values of the symmetric 6x6 stiffness matrix C.
@@ -79,7 +79,7 @@ Example row (single line):
 The script reconstructs the full 3x3x3x3 tensor and extracts P in R^9 = [C1111, C1122, C1133, C2222, C2233, C3333, C1212, C1313, C2323].
 
 --------------------------------------------------------------------------------
-WHAT THE SCRIPT DOES (per input row)
+# WHAT THE SCRIPT DOES (per input row)
 --------------------------------------------------------------------------------
 1) Convert C(21) to:
    - C_true (shape 3x3x3x3)
@@ -96,7 +96,7 @@ WHAT THE SCRIPT DOES (per input row)
 4) Save all candidates and the subset that PASS the threshold.
 
 --------------------------------------------------------------------------------
-OUTPUTS
+# OUTPUTS
 --------------------------------------------------------------------------------
 For each input row i the script writes:
 
@@ -115,7 +115,7 @@ CSV columns:
 meta.json includes arguments, tags, device, seed, and source file path.
 
 --------------------------------------------------------------------------------
-CLI USAGE
+# CLI USAGE
 --------------------------------------------------------------------------------
 python infer.py --csv PATH/TO/file.csv [options]
 
@@ -135,7 +135,7 @@ python infer.py --csv data/target_samples.csv --tags 001,011,111 --pass-threshol
 python infer.py --csv data/target_samples.csv --samples 1500 --device cpu
 
 --------------------------------------------------------------------------------
-MODEL BUNDLE REQUIREMENTS (per tag under models/<tag>/)
+# MODEL BUNDLE REQUIREMENTS (per tag under models/<tag>/)
 --------------------------------------------------------------------------------
 config_<tag>.json
 decoder_<tag>.pt
@@ -150,7 +150,7 @@ S_DIM, P_DIM, LATENT_DIM, DECODER_HIDDEN_DIMS, USE_ATTENTION_DECODER, DROPOUT_PR
 Important: DROPOUT_PROB in the JSON must match training. Mismatched dropout changes layer indices and breaks strict loading.
 
 --------------------------------------------------------------------------------
-INSTALL NOTES
+# INSTALL NOTES
 --------------------------------------------------------------------------------
 Install dependencies:
 pip install -r requirements.txt
@@ -163,7 +163,7 @@ TensorFlow:
 - Elsewhere, requirements install standard tensorflow.
 
 --------------------------------------------------------------------------------
-TROUBLESHOOTING
+# TROUBLESHOOTING
 --------------------------------------------------------------------------------
 - Missing/Unexpected keys when loading a decoder:
   Ensure DECODER_HIDDEN_DIMS and DROPOUT_PROB in the JSON match the checkpoint used for that tag.
@@ -178,7 +178,7 @@ TROUBLESHOOTING
   Run from release/, ensure models/<tag>/ exists for all selected tags.
 
 --------------------------------------------------------------------------------
-REPRO TIPS
+# REPRO TIPS
 --------------------------------------------------------------------------------
 - Keep defaults: --seed 42, --bandwidth auto.
 - Share meta.json with results for reproducibility.
