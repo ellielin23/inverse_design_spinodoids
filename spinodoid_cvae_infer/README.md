@@ -1,10 +1,10 @@
-# Spinodoid CVAE — Release<br>
+# Spinodoid CVAE — INFER<br>
 
 CLI for inverse design from elasticity tensors **C** (Mandel 21) to structure parameters **S_hat**, using trained parallel CVAE decoders and Max’s forward **fNN**.<br>
 
 --------------------------------------------------------------------------------
 ## Quickstart<br>
-From the `release/` folder:
+From the `spinodoid_cvae_infer/` folder:
 - Install dependencies:<br>
     pip install -r requirements.txt<br>
 - Run inference (CSV: 21 Mandel values per row, no headers):<br>
@@ -20,7 +20,7 @@ Common options:
 
 --------------------------------------------------------------------------------
 ## Directory layout<br>
-release/<br>
+spinodoid_cvae_infer/<br>
 &nbsp;&nbsp;&nbsp;&nbsp;infer.py<br>
 &nbsp;&nbsp;&nbsp;&nbsp;requirements.txt<br>
 &nbsp;&nbsp;&nbsp;&nbsp;models/<br>
@@ -142,7 +142,7 @@ DROPOUT_PROB in the JSON must match training. Mismatched dropout changes layer i
 - Missing/Unexpected keys when loading a decoder: ensure DECODER_HIDDEN_DIMS and DROPOUT_PROB in the JSON match the checkpoint.<br>
 - PyTorch torch.load FutureWarning: loader uses a safe path when supported. Harmless for inference.<br>
 - TensorFlow "No training configuration found": harmless. fNN is loaded with compile=False and used only for inference.<br>
-- Models folder not found: run from `release/`, ensure `models/<tag>/` exists for selected tags.<br>
+- Models folder not found: run from `spinodoid_cvae_infer/`, ensure `models/<tag>/` exists for selected tags.<br>
 
 --------------------------------------------------------------------------------
 ## Repro tips<br>

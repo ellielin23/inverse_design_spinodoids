@@ -1,7 +1,7 @@
 # config.py
 
 # === model selection ===
-MODEL = "gaussian"       # options: "flow", "gaussian"
+MODEL = "flow"       # options: "flow", "gaussian"
 FLOW_TYPE = "planar" # options: "planar", "maf", "realnvp"
 TRIAL = 14
 
@@ -15,7 +15,7 @@ NUM_FLOWS = 3 # number of flow layers
 BATCH_SIZE = 32
 LEARNING_RATE = 5e-4
 NUM_EPOCHS = 1000
-BETA_VAR_REG = 1e-2 # regularization parameter for variance
+BETA_VAR_REG = 0.3 # regularization parameter for variance
 
 # === data ===
 DATA_PATH = "data/dataset_train_x1000.csv"
