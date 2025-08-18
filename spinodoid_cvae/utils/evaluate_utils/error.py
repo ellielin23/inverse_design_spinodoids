@@ -9,5 +9,3 @@ def euclidean_norm(tensor):
 def compute_tensor_error(C_true, C_pred):
     """Compute relative error between C_pred and C_true."""
     return euclidean_norm(C_true - C_pred) / euclidean_norm(C_true)
-
-
