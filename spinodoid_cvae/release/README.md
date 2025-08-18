@@ -4,13 +4,13 @@ CLI for inverse design from elasticity tensors **C** (Mandel 21) to structure pa
 
 --------------------------------------------------------------------------------
 ## Quickstart<br>
-From the `release/` folder:<br>
+From the `release/` folder:
 - Install dependencies:<br>
     pip install -r requirements.txt<br>
 - Run inference (CSV: 21 Mandel values per row, no headers):<br>
     python infer.py --csv data/target_samples.csv<br>
 
-Common options:<br>
+Common options:
 - Choose a subset of tags (default = all seven):<br>
     python infer.py --csv data/target_samples.csv --tags 001,011,111<br>
 - Tighten pass threshold to 5%:<br>
@@ -43,16 +43,16 @@ release/<br>
 &nbsp;&nbsp;&nbsp;&nbsp;formatting.py<br>
 &nbsp;&nbsp;&nbsp;&nbsp;data_processing.py<br>
 &nbsp;&nbsp;&nbsp;&nbsp;model_loaders.py<br>
-&nbsp;&nbsp;&nbsp;&nbsp;evaluate.py<br>
-Assumptions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;evaluate.py<br><br>
+
+Assumptions:
 - Model bundles live in `models/<tag>/`<br>
 - fNN model lives at `fNN/fNN.h5`<br>
 
 --------------------------------------------------------------------------------
 ## Input format<br>
 - CSV with **no headers**.<br>
-- Each row is **21 Mandel** upper-triangle values of the symmetric **6x6** stiffness matrix **C** (row-major upper triangle).<br>
-Order of the 21 values:<br>
+- Each row is **21 Mandel** upper-triangle values of the symmetric **6x6** stiffness matrix **C** (row-major upper triangle). Order of the 21 values:<br>
 &nbsp;&nbsp;(0,0),<br>
 &nbsp;&nbsp;(0,1),(0,2),(0,3),(0,4),(0,5),<br>
 &nbsp;&nbsp;(1,1),(1,2),(1,3),(1,4),(1,5),<br>
@@ -60,10 +60,10 @@ Order of the 21 values:<br>
 &nbsp;&nbsp;(3,3),(3,4),(3,5),<br>
 &nbsp;&nbsp;(4,4),(4,5),<br>
 &nbsp;&nbsp;(5,5)<br>
-Minimal example (single row):<br>
-&nbsp;&nbsp;0.25739938,0.08234422,0.08384212,-0.001122892,0.0018023637,-0.00040648473,0.2489467,0.084682286,7.031013e-05,0.0009808041,0.00050578703,0.26596344,0.0002066667,0.0023057577,0.0029397272,0.16781569,-0.00031259615,0.001966438,0.17230871,8.903016e-05,0.17266414<br>
-The script reconstructs the full **3x3x3x3** tensor and extracts **P ∈ R^9**:<br>
-&nbsp;&nbsp;[C1111, C1122, C1133, C2222, C2233, C3333, C1212, C1313, C2323]<br>
+- Minimal example (single row):<br><br>
+0.25739938,0.08234422,0.08384212,-0.001122892,0.0018023637,-0.00040648473,0.2489467,0.084682286,7.031013e-05,0.0009808041,0.00050578703,0.26596344,0.0002066667,0.0023057577,0.0029397272,0.16781569,-0.00031259615,0.001966438,0.17230871,8.903016e-05,0.17266414<br>
+- The script reconstructs the full **3x3x3x3** tensor and extracts **P ∈ R^9**:<br><br>
+[C1111, C1122, C1133, C2222, C2233, C3333, C1212, C1313, C2323]<br>
 
 --------------------------------------------------------------------------------
 ## What the script does (per input row)<br>
@@ -85,11 +85,10 @@ For each input row `i` the script writes:<br>
 outputs/row_i/<br>
 &nbsp;&nbsp;all_candidates.csv<br>
 &nbsp;&nbsp;passing_candidates.csv<br>
-&nbsp;&nbsp;meta.json<br>
+&nbsp;&nbsp;meta.json<br><br><br>
+
 `all_candidates.csv` / `passing_candidates.csv` columns:<br>
 - tag       : theta pattern (one of 001,010,100,011,101,110,111)<br>
-- peak_idx  : probability rank among kept KDE peaks for that tag (0 = highest)<br>
-- bw_used   : KDE bandwidth (value or "auto")<br>
 - prob_est  : estimated peak probability<br>
 - S_hat     : candidate structure parameters as a list string<br>
 - error     : relative tensor error as percent (two decimals)<br>
@@ -130,12 +129,9 @@ Important:<br>
 
 --------------------------------------------------------------------------------
 ## Install notes<br>
-Install dependencies:<br>
-&nbsp;&nbsp;pip install -r requirements.txt<br>
-PyTorch:<br>
-&nbsp;&nbsp;requirements.txt pins a CPU/MPS build. For CUDA, install the proper wheel from pytorch.org after requirements.<br>
-TensorFlow:<br>
-&nbsp;&nbsp;On Apple Silicon, requirements install tensorflow-macos + tensorflow-metal. Elsewhere, requirements install standard tensorflow.<br>
+- Install dependencies:<br> pip install -r requirements.txt<br>
+- PyTorch:<br> requirements.txt pins a CPU/MPS build. For CUDA, install the proper wheel from pytorch.org after requirements.<br>
+- TensorFlow:<br> On Apple Silicon, requirements install tensorflow-macos + tensorflow-metal. Elsewhere, requirements install standard tensorflow.<br>
 
 --------------------------------------------------------------------------------
 ## Troubleshooting<br>
