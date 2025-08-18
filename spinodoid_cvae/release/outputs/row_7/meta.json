@@ -1,0 +1,21 @@
+{
+  "mode": "csv_c_unlabeled_21",
+  "row": 7,
+  "pass_threshold_fraction": 0.08,
+  "prob_threshold": 0.1,
+  "samples": 1000,
+  "bandwidth": "auto",
+  "tags": [
+    "001",
+    "010",
+    "100",
+    "011",
+    "101",
+    "110",
+    "111"
+  ],
+  "models_dir": "models",
+  "device": "cpu",
+  "seed": 42,
+  "source_csv": "data/target_samples.csv"
+}

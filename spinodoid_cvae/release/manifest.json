@@ -1,0 +1,225 @@
+{
+  "source_root": "checkpoints/best",
+  "dst_models": "release_v1/models",
+  "tags": [
+    "001",
+    "010",
+    "100",
+    "011",
+    "101",
+    "110",
+    "111"
+  ],
+  "models": [
+    {
+      "tag": "001",
+      "source_dir": "checkpoints/best/001_trial_18",
+      "files": {
+        "config": {
+          "path": "release_v1/models/001/config_001.json",
+          "sha256": "88da355bcfb29c5622816df7aa1fcb4d99f7cdbebd314a6b9d225fe688e3bb97"
+        },
+        "decoder": {
+          "path": "release_v1/models/001/decoder_001.pt",
+          "sha256": "f4da1a07f5591920afa99f8032a8fb9d1326072b93180cefc7389a6f8af4049f"
+        },
+        "P_mean_001.npy": {
+          "path": "release_v1/models/001/P_mean_001.npy",
+          "sha256": "2830baa28370a43adf40fbf4977ca51bcfa55dfb7aa140daf2a828742a8249ce"
+        },
+        "P_std_001.npy": {
+          "path": "release_v1/models/001/P_std_001.npy",
+          "sha256": "9804a6b8aabc9d4210722cefb4dfb44378caa6094d81bfaf9b60e0f227d96fbb"
+        },
+        "S_mean_001.npy": {
+          "path": "release_v1/models/001/S_mean_001.npy",
+          "sha256": "9bb1f4e128aa1d2efb03214cb703c6059ce0081cf5c933bdb27c3c0ffde0221b"
+        },
+        "S_std_001.npy": {
+          "path": "release_v1/models/001/S_std_001.npy",
+          "sha256": "69d4938d65cda4b315668fc9ec9821c102141f1f42e70bd05098b92bea878432"
+        }
+      }
+    },
+    {
+      "tag": "010",
+      "source_dir": "checkpoints/best/010_trial_6",
+      "files": {
+        "config": {
+          "path": "release_v1/models/010/config_010.json",
+          "sha256": "d6c5619f317cc7c127712dd60f78cbfc898762c3513d1c69e88b34f33e9ba62a"
+        },
+        "decoder": {
+          "path": "release_v1/models/010/decoder_010.pt",
+          "sha256": "5a1755fc694e2b5259f615f865fc60015846eb6441bd34eea8d3fa800d3c4ae5"
+        },
+        "P_mean_010.npy": {
+          "path": "release_v1/models/010/P_mean_010.npy",
+          "sha256": "195aa4404e03494ec7305071e72e2e0722fa916e94f71f27215d4c62c4c6ca3f"
+        },
+        "P_std_010.npy": {
+          "path": "release_v1/models/010/P_std_010.npy",
+          "sha256": "fd648fca18205e27f9afbbd615f1e81390ac444531272c48eb6809a7f02d74ef"
+        },
+        "S_mean_010.npy": {
+          "path": "release_v1/models/010/S_mean_010.npy",
+          "sha256": "f510b53077e88dc05cdad2ee42ffdd8618ebbaf3e47d8817ce5aecc66d3d7598"
+        },
+        "S_std_010.npy": {
+          "path": "release_v1/models/010/S_std_010.npy",
+          "sha256": "eeaecc81410f7e39458df00a56ffcdeb53a3844555b809abfd5690e5e0ba2330"
+        }
+      }
+    },
+    {
+      "tag": "100",
+      "source_dir": "checkpoints/best/100_trial_9",
+      "files": {
+        "config": {
+          "path": "release_v1/models/100/config_100.json",
+          "sha256": "5f96e3b0ea693c40934a04f9f912b40f1fea6229a10cb7e1ac391c1e8f4ccc15"
+        },
+        "decoder": {
+          "path": "release_v1/models/100/decoder_100.pt",
+          "sha256": "ecc4b3d39b84e41b94dd037295fb53ac51d41d4067b319b81c82aaa91fbb4840"
+        },
+        "P_mean_100.npy": {
+          "path": "release_v1/models/100/P_mean_100.npy",
+          "sha256": "249e2c74473621bfadf75b6936f729a5c6d9236cb943b49febb24efb27d74721"
+        },
+        "P_std_100.npy": {
+          "path": "release_v1/models/100/P_std_100.npy",
+          "sha256": "f8879735f2e91747b5b75916925d0fcac82aac3ebfc8493c88f04225471e29a4"
+        },
+        "S_mean_100.npy": {
+          "path": "release_v1/models/100/S_mean_100.npy",
+          "sha256": "17a61f0cb19b2969bc2a591ca6c125d6a17cd3e122f80cb2708e0bf965d06ab5"
+        },
+        "S_std_100.npy": {
+          "path": "release_v1/models/100/S_std_100.npy",
+          "sha256": "18b804e34d7d7f7c227359aba7f61853f719bc75a7d0aec6414c983bd02efe8e"
+        }
+      }
+    },
+    {
+      "tag": "011",
+      "source_dir": "checkpoints/best/011_trial_16",
+      "files": {
+        "config": {
+          "path": "release_v1/models/011/config_011.json",
+          "sha256": "a9813964cfc2ab7ae8b0564f0e412793509baff019c32682f82c811cbd30506b"
+        },
+        "decoder": {
+          "path": "release_v1/models/011/decoder_011.pt",
+          "sha256": "4baae06bd4be50338541123608391482279a41caf0d880c9fdd549d7e80193f4"
+        },
+        "P_mean_011.npy": {
+          "path": "release_v1/models/011/P_mean_011.npy",
+          "sha256": "3c5cc9b3dc67369be637b66d670f2a804595b2a52b42dd65cc0b81230f3c9024"
+        },
+        "P_std_011.npy": {
+          "path": "release_v1/models/011/P_std_011.npy",
+          "sha256": "399b415cff59378cfcac22b95b47505be3ca36c2e8bf89887b40e12bb39e87da"
+        },
+        "S_mean_011.npy": {
+          "path": "release_v1/models/011/S_mean_011.npy",
+          "sha256": "1fe89a9410720befd57b0ad0b65618ea6ec827b1d7bf14b4964da0f9d4c12240"
+        },
+        "S_std_011.npy": {
+          "path": "release_v1/models/011/S_std_011.npy",
+          "sha256": "41181436ebb6d7cbd5a146549af2e3e7a03a87493bfa4dd3b16f13f6933db04d"
+        }
+      }
+    },
+    {
+      "tag": "101",
+      "source_dir": "checkpoints/best/101_trial_5",
+      "files": {
+        "config": {
+          "path": "release_v1/models/101/config_101.json",
+          "sha256": "e83caea591936c0a7d57d75afbbd3cf31afbfd69fc850ab51d9521888182e50f"
+        },
+        "decoder": {
+          "path": "release_v1/models/101/decoder_101.pt",
+          "sha256": "b5de812f298c19b52633ff3e8b9b2056f67e4c71f12d58418790fa2fb1909182"
+        },
+        "P_mean_101.npy": {
+          "path": "release_v1/models/101/P_mean_101.npy",
+          "sha256": "d5adf16178bc9d86ea859eb8ad3d70662708f6bd094deb2be8b51b8a65c51a94"
+        },
+        "P_std_101.npy": {
+          "path": "release_v1/models/101/P_std_101.npy",
+          "sha256": "69270058c385c569caf116130fa5ec4d136ae5f920c2c5f62a60c809c054a97d"
+        },
+        "S_mean_101.npy": {
+          "path": "release_v1/models/101/S_mean_101.npy",
+          "sha256": "7998f1d49723f82d2be3125d98ae085748c15e7322ae785f4549f303d536fa2f"
+        },
+        "S_std_101.npy": {
+          "path": "release_v1/models/101/S_std_101.npy",
+          "sha256": "9bdd689893f3bfcee80c3007840b2b9b696a9e226b5c29c0f23c7e9e13f772df"
+        }
+      }
+    },
+    {
+      "tag": "110",
+      "source_dir": "checkpoints/best/110_trial_3",
+      "files": {
+        "config": {
+          "path": "release_v1/models/110/config_110.json",
+          "sha256": "9b3de4ebbaf16a2a14f1c8894909d2f9ebc7126dddde66d375c1fc6adde66712"
+        },
+        "decoder": {
+          "path": "release_v1/models/110/decoder_110.pt",
+          "sha256": "54dccbc9627a12fb8707a1dbfd730206b9098e1c9a93276e72253da369464681"
+        },
+        "P_mean_110.npy": {
+          "path": "release_v1/models/110/P_mean_110.npy",
+          "sha256": "28749638f44bfbcbff013a901aff65189ae911b37b54f656e48a889483175551"
+        },
+        "P_std_110.npy": {
+          "path": "release_v1/models/110/P_std_110.npy",
+          "sha256": "b1b555754500dbc1407ffdfd8328e2182f04033d173583161b06590e27c74754"
+        },
+        "S_mean_110.npy": {
+          "path": "release_v1/models/110/S_mean_110.npy",
+          "sha256": "4e873aab2d3953c30c86111915b2e36e4064fe7df98a91e39d24fc8e5c8cba41"
+        },
+        "S_std_110.npy": {
+          "path": "release_v1/models/110/S_std_110.npy",
+          "sha256": "10e536dd84f0332d53811de6ae317535942cf3017f3915f3c351589c078e17cb"
+        }
+      }
+    },
+    {
+      "tag": "111",
+      "source_dir": "checkpoints/best/111_trial_5",
+      "files": {
+        "config": {
+          "path": "release_v1/models/111/config_111.json",
+          "sha256": "9a370ee04d953c5f66035b9d70999f5e6370c55246cd40c1622ec6909f92c92c"
+        },
+        "decoder": {
+          "path": "release_v1/models/111/decoder_111.pt",
+          "sha256": "b32efac9b7078cb6478a912b5d55934499c62511baa159d1c7b47f6b7f790cc6"
+        },
+        "P_mean_111.npy": {
+          "path": "release_v1/models/111/P_mean_111.npy",
+          "sha256": "d833007e5127313023c3a0f745220f307ca8631bfb3e7afe555999b885bc5f33"
+        },
+        "P_std_111.npy": {
+          "path": "release_v1/models/111/P_std_111.npy",
+          "sha256": "374d04423c53ad72ed316d0c0e077aef05a5863aca03aea81c30ea87ef7b580c"
+        },
+        "S_mean_111.npy": {
+          "path": "release_v1/models/111/S_mean_111.npy",
+          "sha256": "f050af2350d25503197274b3f63a65a49f1db7db0ba0b67542831446dd2f8925"
+        },
+        "S_std_111.npy": {
+          "path": "release_v1/models/111/S_std_111.npy",
+          "sha256": "b653115b9dcbbf6413517cdba3bf8c0c6ee07d0062e11c95651ac54f7d399af4"
+        }
+      }
+    }
+  ]
+}
