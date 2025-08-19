@@ -1,8 +1,8 @@
 # config.py
 
 # === model selection ===
-MODEL = "gaussian"       # options: "flow", "gaussian"
-FLOW_TYPE = "planar" # options: "planar", "maf", "realnvp"
+MODEL = "flow"       # options: "flow", "gaussian"
+FLOW_TYPE = "realnvp" # options: "planar", "maf", "realnvp"
 TRIAL = 1
 
 # === model dimensions ===
@@ -13,9 +13,9 @@ NUM_FLOWS = 3
 
 # === training hyperparameters ===
 BATCH_SIZE = 32
-LEARNING_RATE = 5e-4
+LEARNING_RATE = 1e-3
 NUM_EPOCHS = 400
-BETA_VAR_REG = 0.3
+BETA_VAR_REG = 0.8
 SIGMA_MIN = 1e-3            # floor for std in normalized P space
 CLIP_GRAD_NORM = 1.0        # optional grad clipping
 
