@@ -1,43 +1,39 @@
 # models/gaussian_forward.py
-
+import math
 import torch
 import torch.nn as nn
 
 class GaussianForwardModel(nn.Module):
     """
-    Gaussian probabilistic model of p(P | S), where:
-    - S ∈ ℝ⁴: structure parameters (input)
-    - P ∈ ℝ⁹: material properties (output)
-    The model outputs a Gaussian: N(μ(S), diag(σ²(S)))
+    p(P | S) = N( μ(S), diag(σ^2(S)) )
+    Expects S and P to be normalized outside this module.
     """
-
-    def __init__(self, S_dim=4, P_dim=9, hidden_dims=[128, 64]):
+    def __init__(self, S_dim=4, P_dim=9, hidden_dims=[128, 64], sigma_min=1e-3):
         super().__init__()
-        self.S_dim = S_dim
-        self.P_dim = P_dim
+        self.S_dim, self.P_dim = S_dim, P_dim
+        self.sigma_min = sigma_min
+        self.log_sigma_min = math.log(sigma_min)
 
-        # Hidden layers
         layers = []
-        input_dim = S_dim
-        for hdim in hidden_dims:
-            layers.append(nn.Linear(input_dim, hdim))
-            layers.append(nn.Tanh())
-            input_dim = hdim
+        in_dim = S_dim
+        for h in hidden_dims:
+            layers += [nn.Linear(in_dim, h), nn.Tanh()]
+            in_dim = h
         self.backbone = nn.Sequential(*layers)
 
-        # output mean and log variance
-        self.mu = nn.Linear(input_dim, P_dim)
-        self.log_sigma = nn.Linear(input_dim, P_dim)
+        self.mu = nn.Linear(in_dim, P_dim)
+        self.log_sigma = nn.Linear(in_dim, P_dim)
+
+        # init: start with modest variances (log_sigma ~ -2 → sigma ~ 0.14)
+        nn.init.constant_(self.log_sigma.bias, -2.0)
 
     def forward(self, S):
         """
-        Args:
-            S (Tensor): shape (batch_size, 4)
-        Returns:
-            mu (Tensor): shape (batch_size, 9)
-            log_sigma (Tensor): shape (batch_size, 9)
+        S: (B, S_dim) -> returns (mu, log_sigma) each (B, P_dim)
         """
-        features = self.backbone(S)
-        mu = self.mu(features)
-        log_sigma = self.log_sigma(features)
+        h = self.backbone(S)
+        mu = self.mu(h)
+        log_sigma = self.log_sigma(h)
+        # numerical safety
+        log_sigma = torch.clamp(log_sigma, min=self.log_sigma_min)
         return mu, log_sigma
