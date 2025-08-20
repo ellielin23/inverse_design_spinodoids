@@ -3,19 +3,19 @@
 # === model selection ===
 MODEL = "flow"       # options: "flow", "gaussian"
 FLOW_TYPE = "realnvp" # options: "planar", "maf", "realnvp"
-TRIAL = 1
+TRIAL = 3
 
 # === model dimensions ===
 S_DIM = 4
 P_DIM = 9
 HIDDEN_DIMS = [128, 64, 32]
-NUM_FLOWS = 3
+NUM_FLOWS = 4
 
 # === training hyperparameters ===
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 400
-BETA_VAR_REG = 0.8
+BETA_VAR_REG = 0.0
 SIGMA_MIN = 1e-3            # floor for std in normalized P space
 CLIP_GRAD_NORM = 1.0        # optional grad clipping
 

@@ -17,5 +17,5 @@
   "models_dir": "models",
   "device": "cpu",
   "seed": 42,
-  "source_csv": "data/target_samples.csv"
+  "source_csv": "data/sample_targets.csv"
 }
