@@ -35,10 +35,10 @@ class AttnDecoder(nn.Module):
         Returns:
             S_hat (torch.Tensor): [batch_size, S_dim]
         """
-        x = torch.cat([z, P], dim=1)  # [B, latent_dim + P_dim]
-        x = x.unsqueeze(1)            # [B, 1, D]
-        x, _ = self.attn(x, x, x)     # self-attention on single token
-        x = x.squeeze(1)              # [B, D]
+        x = torch.cat([z, P], dim=1)
+        x = x.unsqueeze(1)            
+        x, _ = self.attn(x, x, x)     
+        x = x.squeeze(1)              
         x = self.hidden_layers(x)
         S_hat = self.output_layer(x)
         return S_hat

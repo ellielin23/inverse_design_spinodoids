@@ -12,7 +12,6 @@ from config import *
 from utils.data_utils.dataset import SpinodoidDataset
 from utils.model_utils import get_encoder, get_decoder
 from utils.loss import total_loss, get_kl_beta
-from utils.domain_scaling import *
 
 # === setup device ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

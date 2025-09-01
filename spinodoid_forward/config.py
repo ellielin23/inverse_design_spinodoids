@@ -1,9 +1,9 @@
 # config.py
 
 # === model selection ===
-MODEL = "flow"       # options: "flow", "gaussian"
+MODEL = "gaussian"       # options: "flow", "gaussian"
 FLOW_TYPE = "realnvp" # options: "planar", "maf", "realnvp"
-TRIAL = 3
+TRIAL = 5
 
 # === model dimensions ===
 S_DIM = 4
@@ -15,13 +15,13 @@ NUM_FLOWS = 4
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 400
-BETA_VAR_REG = 0.0
+BETA_VAR_REG = 0.8
 SIGMA_MIN = 1e-3            # floor for std in normalized P space
 CLIP_GRAD_NORM = 1.0        # optional grad clipping
 
 # === data ===
-DATA_PATH = "data/dataset_train_x1000.csv"
-DISTRIBUTIONAL_DATA_PATH = "data/dataset_distributional.csv"
+DATA_PATH = "data/dataset_large.csv"
+DISTRIBUTIONAL_DATA_PATH = "data/dataset_distributional_total.csv"
 
 # === save paths ===
 if MODEL == "flow":

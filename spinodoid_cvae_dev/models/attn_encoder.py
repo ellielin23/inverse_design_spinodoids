@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class AttnEncoder(nn.Module):
     """
     Encoder with attention for Conditional Variational Autoencoder.
@@ -44,20 +43,20 @@ class AttnEncoder(nn.Module):
         Returns:
             Tensor of shape (batch_size, hidden_dim)
         """
-        Q = self.query(x)  # (B, D)
-        K = self.key(x)    # (B, D)
-        V = self.value(x)  # (B, D)
+        Q = self.query(x)
+        K = self.key(x)
+        V = self.value(x)
 
-        # Compute attention weights using scaled dot-product
-        scores = torch.matmul(Q.unsqueeze(1), K.unsqueeze(2)) / self.scale  # (B, 1, 1)
-        attn_weights = F.softmax(scores, dim=-1)  # (B, 1, 1)
-        attended = attn_weights.squeeze(-1) * V  # (B, D)
+        # compute attention weights using scaled dot-product
+        scores = torch.matmul(Q.unsqueeze(1), K.unsqueeze(2)) / self.scale 
+        attn_weights = F.softmax(scores, dim=-1)
+        attended = attn_weights.squeeze(-1) * V 
         return attended
 
     def forward(self, S, P):
-        x = torch.cat([S, P], dim=1)  # (B, input_dim)
-        x = self.mlp(x)               # (B, hidden_dim)
-        x = self.attention(x)         # (B, hidden_dim)
+        x = torch.cat([S, P], dim=1)
+        x = self.mlp(x) 
+        x = self.attention(x)
 
         mu     = self.fc_mu(x)
         logvar = self.fc_logvar(x)
